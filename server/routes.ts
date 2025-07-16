@@ -481,6 +481,71 @@ async function initializeSampleData() {
     // Create sample transactions only if accounts were just created
     if (existingAccounts1.length === 0 && chequingAccount1) {
       const transactions1 = [
+        // December 2024 transactions
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-15'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5200.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-14'),
+          description: 'Amazon.ca Purchase',
+          amount: '-89.99',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-13'),
+          description: 'Tim Hortons',
+          amount: '-12.45',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-12'),
+          description: 'Netflix Subscription',
+          amount: '-16.49',
+          type: 'debit',
+          category: 'entertainment'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-11'),
+          description: 'Costco Wholesale',
+          amount: '-234.67',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-10'),
+          description: 'Bell Canada',
+          amount: '-125.99',
+          type: 'debit',
+          category: 'utilities'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-09'),
+          description: 'Shoppers Drug Mart',
+          amount: '-45.67',
+          type: 'debit',
+          category: 'health'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-08'),
+          description: 'Rogers Communications',
+          amount: '-89.99',
+          type: 'debit',
+          category: 'utilities'
+        },
         {
           accountId: chequingAccount1.id,
           date: new Date('2024-12-07'),
@@ -488,6 +553,30 @@ async function initializeSampleData() {
           amount: '-2400.00',
           type: 'debit',
           category: 'transfer'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-06'),
+          description: 'Canadian Tire',
+          amount: '-156.78',
+          type: 'debit',
+          category: 'automotive'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-05'),
+          description: 'Metro Grocery Store',
+          amount: '-87.34',
+          type: 'debit',
+          category: 'groceries'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-04'),
+          description: 'Starbucks',
+          amount: '-8.95',
+          type: 'debit',
+          category: 'food'
         },
         {
           accountId: chequingAccount1.id,
@@ -499,6 +588,40 @@ async function initializeSampleData() {
         },
         {
           accountId: chequingAccount1.id,
+          date: new Date('2024-12-02'),
+          description: 'LCBO',
+          amount: '-42.99',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-01'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5200.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        
+        // November 2024 transactions
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-30'),
+          description: 'Halifax Water',
+          amount: '-67.89',
+          type: 'debit',
+          category: 'utilities'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-29'),
+          description: 'Sobeys',
+          amount: '-142.56',
+          type: 'debit',
+          category: 'groceries'
+        },
+        {
+          accountId: chequingAccount1.id,
           date: new Date('2024-11-28'),
           description: 'Direct Deposit - Payroll',
           amount: '5000.00',
@@ -507,11 +630,357 @@ async function initializeSampleData() {
         },
         {
           accountId: chequingAccount1.id,
+          date: new Date('2024-11-27'),
+          description: 'Walmart Canada',
+          amount: '-78.23',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-26'),
+          description: 'Cineplex Theatres',
+          amount: '-34.99',
+          type: 'debit',
+          category: 'entertainment'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-25'),
+          description: 'Shell Gas Station',
+          amount: '-65.40',
+          type: 'debit',
+          category: 'automotive'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-24'),
+          description: 'Best Buy Canada',
+          amount: '-299.99',
+          type: 'debit',
+          category: 'electronics'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-23'),
+          description: 'McDonalds',
+          amount: '-14.67',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-22'),
+          description: 'Home Depot',
+          amount: '-189.45',
+          type: 'debit',
+          category: 'home'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-21'),
+          description: 'Spotify Premium',
+          amount: '-11.99',
+          type: 'debit',
+          category: 'entertainment'
+        },
+        {
+          accountId: chequingAccount1.id,
           date: new Date('2024-11-20'),
           description: 'Nova Scotia Power',
           amount: '-150.00',
           type: 'debit',
           category: 'utilities'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-19'),
+          description: 'Atlantic Superstore',
+          amount: '-167.89',
+          type: 'debit',
+          category: 'groceries'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-18'),
+          description: 'Interac e-Transfer from Mom',
+          amount: '200.00',
+          type: 'credit',
+          category: 'transfer'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-17'),
+          description: 'Pizza Hut',
+          amount: '-29.99',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-16'),
+          description: 'Rexall Pharmacy',
+          amount: '-23.45',
+          type: 'debit',
+          category: 'health'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-15'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5200.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-14'),
+          description: 'Esso Gas Station',
+          amount: '-72.15',
+          type: 'debit',
+          category: 'automotive'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-13'),
+          description: 'Winners',
+          amount: '-89.99',
+          type: 'debit',
+          category: 'clothing'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-12'),
+          description: 'Dentist Appointment',
+          amount: '-350.00',
+          type: 'debit',
+          category: 'health'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-11'),
+          description: 'Income Tax Return',
+          amount: '1250.00',
+          type: 'credit',
+          category: 'government'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-10'),
+          description: 'Uber Eats',
+          amount: '-24.67',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-09'),
+          description: 'Loblaws',
+          amount: '-134.22',
+          type: 'debit',
+          category: 'groceries'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-08'),
+          description: 'YouTube Premium',
+          amount: '-14.99',
+          type: 'debit',
+          category: 'entertainment'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-07'),
+          description: 'Kijiji Purchase',
+          amount: '-50.00',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-06'),
+          description: 'Pet Valu',
+          amount: '-67.34',
+          type: 'debit',
+          category: 'pets'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-05'),
+          description: 'Canadian Automobile Association',
+          amount: '-150.00',
+          type: 'debit',
+          category: 'insurance'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-04'),
+          description: 'Freelance Payment',
+          amount: '800.00',
+          type: 'credit',
+          category: 'income'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-03'),
+          description: 'Harvey\'s',
+          amount: '-18.99',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-02'),
+          description: 'Goodlife Fitness',
+          amount: '-59.99',
+          type: 'debit',
+          category: 'fitness'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-01'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5200.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        
+        // October 2024 transactions
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-31'),
+          description: 'Rent Payment',
+          amount: '-1800.00',
+          type: 'debit',
+          category: 'housing'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-30'),
+          description: 'No Frills',
+          amount: '-95.67',
+          type: 'debit',
+          category: 'groceries'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-29'),
+          description: 'Disney+ Subscription',
+          amount: '-11.99',
+          type: 'debit',
+          category: 'entertainment'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-28'),
+          description: 'Parking Meter',
+          amount: '-3.50',
+          type: 'debit',
+          category: 'transportation'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-27'),
+          description: 'Insurance Refund',
+          amount: '245.00',
+          type: 'credit',
+          category: 'insurance'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-26'),
+          description: 'Dairy Queen',
+          amount: '-9.87',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-25'),
+          description: 'Staples Business Depot',
+          amount: '-67.89',
+          type: 'debit',
+          category: 'office'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-24'),
+          description: 'IKEA Canada',
+          amount: '-189.99',
+          type: 'debit',
+          category: 'home'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-23'),
+          description: 'Investment Return',
+          amount: '125.50',
+          type: 'credit',
+          category: 'investment'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-22'),
+          description: 'Subway',
+          amount: '-12.99',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-21'),
+          description: 'Sport Chek',
+          amount: '-124.99',
+          type: 'debit',
+          category: 'sports'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-20'),
+          description: 'Eastlink Internet',
+          amount: '-79.99',
+          type: 'debit',
+          category: 'utilities'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-19'),
+          description: 'Drug Store',
+          amount: '-34.56',
+          type: 'debit',
+          category: 'health'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-18'),
+          description: 'Interac e-Transfer to John',
+          amount: '-100.00',
+          type: 'debit',
+          category: 'transfer'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-17'),
+          description: 'A&W',
+          amount: '-16.78',
+          type: 'debit',
+          category: 'food'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-16'),
+          description: 'Dollarama',
+          amount: '-23.45',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-10-15'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5200.00',
+          type: 'credit',
+          category: 'payroll'
         }
       ];
 
