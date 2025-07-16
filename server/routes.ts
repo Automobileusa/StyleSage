@@ -23,7 +23,7 @@ function getSession() {
     ttl: sessionTtl,
     tableName: "sessions",
   });
-  
+
   return session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key',
     store: sessionStore,
@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/auth/login', async (req, res) => {
     try {
       const { userId, password } = loginSchema.parse(req.body);
-      
+
       // Static credentials check
       if (userId === '920200' && password === 'EastM@ple$2025') {
         const user = await storage.getUserByUserId(userId);
@@ -94,7 +94,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         // Store temp login data in session
         req.session.tempUserId = user.id;
-        
+
         res.json({ success: true, message: "OTP sent to your email" });
       } else {
         res.status(401).json({ message: "Invalid credentials" });
@@ -115,16 +115,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const isValid = await verifyOtp(tempUserId, code, 'Login');
-      
+
       if (isValid) {
         // Set authenticated session
         req.session.userId = tempUserId;
         delete req.session.tempUserId;
-        
+
         const user = await storage.getUser(tempUserId);
         res.json({ success: true, user });
       } else {
-        res.status(401).json({ message: "Invalid OTP" });
+        res.status(401).json({ 
+          message: "Invalid verification code",
+          error: "INVALID_OTP"
+        });
       }
     } catch (error) {
       console.error("OTP verification error:", error);
@@ -158,7 +161,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/dashboard', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.session.userId;
-      
+
       const [accounts, transactions, externalAccounts] = await Promise.all([
         storage.getUserAccounts(userId),
         storage.getUserTransactions(userId, 20),
@@ -181,7 +184,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const billPaymentData = insertBillPaymentSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       // Create bill payment record
       const billPayment = await storage.createBillPayment({
         ...billPaymentData,
@@ -210,19 +213,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         code: z.string().length(6),
         billPaymentId: z.number()
       }).parse(req.body);
-      
+
       const userId = req.session.userId;
       const isValid = await verifyOtp(userId, code, 'Bill Payment');
-      
+
       if (isValid) {
         // Update bill payment status
         await storage.updateBillPaymentStatus(billPaymentId, 'completed');
-        
+
         // Send admin notification
         const user = await storage.getUser(userId);
         const billPayment = await storage.getUserBillPayments(userId);
         const currentBillPayment = billPayment.find(bp => bp.id === billPaymentId);
-        
+
         await sendAdminNotification(
           'Bill Payment',
           user!,
@@ -244,7 +247,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const chequeOrderData = insertChequeOrderSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       const chequeOrder = await storage.createChequeOrder({
         ...chequeOrderData,
         userId
@@ -271,17 +274,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         code: z.string().length(6),
         chequeOrderId: z.number()
       }).parse(req.body);
-      
+
       const userId = req.session.userId;
       const isValid = await verifyOtp(userId, code, 'Cheque Order');
-      
+
       if (isValid) {
         await storage.updateChequeOrderStatus(chequeOrderId, 'processing');
-        
+
         const user = await storage.getUser(userId);
         const chequeOrders = await storage.getUserChequeOrders(userId);
         const currentOrder = chequeOrders.find(co => co.id === chequeOrderId);
-        
+
         await sendAdminNotification(
           'Cheque Order',
           user!,
@@ -303,7 +306,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const externalAccountData = insertExternalAccountSchema.parse(req.body);
       const userId = req.session.userId;
-      
+
       const externalAccount = await storage.createExternalAccount({
         ...externalAccountData,
         userId
@@ -312,7 +315,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Generate micro-deposits
       const deposit1 = (Math.random() * 0.99 + 0.01).toFixed(2);
       const deposit2 = (Math.random() * 0.99 + 0.01).toFixed(2);
-      
+
       await storage.createMicroDeposit({
         externalAccountId: externalAccount.id,
         deposit1,
@@ -354,13 +357,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         code: z.string().length(6),
         externalAccountId: z.number()
       }).parse(req.body);
-      
+
       const userId = req.session.userId;
       const isValid = await verifyOtp(userId, code, 'External Account Linking');
-      
+
       if (isValid) {
         await storage.updateExternalAccountStatus(externalAccountId, 'verified');
-        
+
         const microDeposit = await storage.getMicroDeposit(externalAccountId);
         if (microDeposit) {
           await storage.verifyMicroDeposit(microDeposit.id);

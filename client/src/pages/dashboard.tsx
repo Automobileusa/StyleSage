@@ -1,20 +1,21 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { 
   University, 
-  Bell, 
-  LogOut, 
   CreditCard, 
   PiggyBank, 
-  FileText, 
-  Check, 
-  Link 
+  Bell, 
+  LogOut, 
+  DollarSign,
+  TrendingUp,
+  Calendar,
+  ExternalLink
 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
 import BalanceChart from "@/components/BalanceChart";
 import TransactionTable from "@/components/TransactionTable";
 import BillPaymentModal from "@/components/modals/BillPaymentModal";
@@ -47,38 +48,66 @@ interface DashboardData {
   }>;
 }
 
-export default function Dashboard() {
+export default function DashboardPage() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeModal, setActiveModal] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const { data: dashboardData, isLoading } = useQuery<DashboardData>({
-    queryKey: ["/api/dashboard"],
-  });
-
-  const handleLogout = async () => {
-    try {
-      await apiRequest('POST', '/api/auth/logout');
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest('POST', '/api/auth/logout', {});
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.clear();
       window.location.reload();
-    } catch (error) {
+    },
+    onError: (error: any) => {
+      console.error("Logout error:", error);
       toast({
         title: "Logout Failed",
-        description: "Please try again",
+        description: "There was an error logging out. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLogout = () => {
+    logoutMutation.mutate();
+  };
+
+  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useQuery({
+    queryKey: ["/api/dashboard"],
+    enabled: !!user,
+    retry: 2,
+    retryDelay: 1000,
+  });
+
+  // Handle dashboard loading error
+  useEffect(() => {
+    if (dashboardError) {
+      console.error("Dashboard error:", dashboardError);
+      toast({
+        title: "Dashboard Error",
+        description: "Failed to load dashboard data. Please refresh the page.",
         variant: "destructive",
       });
     }
-  };
+  }, [dashboardError, toast]);
 
-  if (isLoading) {
+  if (!user || isDashboardLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-[var(--text-gray)]">Loading your banking dashboard...</p>
+        </div>
       </div>
     );
   }
 
-  const chequingAccount = dashboardData?.accounts.find(acc => acc.accountType === 'chequing');
-  const savingsAccount = dashboardData?.accounts.find(acc => acc.accountType === 'savings');
+  const chequingAccount = dashboardData?.accounts?.find((acc: any) => acc.accountType === 'chequing');
+  const savingsAccount = dashboardData?.accounts?.find((acc: any) => acc.accountType === 'savings');
 
   return (
     <div className="min-h-screen bg-gray-50">

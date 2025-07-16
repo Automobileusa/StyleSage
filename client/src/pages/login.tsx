@@ -29,10 +29,25 @@ export default function LoginPage() {
         description: "Please check your email for the verification code.",
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Login error:", error);
+      let errorMessage = "Please check your credentials and try again.";
+      
+      if (error?.message) {
+        if (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Invalid credentials")) {
+          errorMessage = "Invalid User ID or Password. Please check your credentials and try again.";
+        } else if (error.message.includes("Network") || error.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Request timed out. Please try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Login Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -46,10 +61,25 @@ export default function LoginPage() {
     onSuccess: () => {
       window.location.reload(); // Refresh to update auth state
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("OTP verification error:", error);
+      let errorMessage = "Please check your verification code and try again.";
+      
+      if (error?.message) {
+        if (error.message.includes("401") || error.message.includes("Invalid OTP")) {
+          errorMessage = "Invalid verification code. Please check the 6-digit code from your email and try again.";
+        } else if (error.message.includes("expired")) {
+          errorMessage = "Verification code has expired. Please request a new one.";
+        } else if (error.message.includes("Network") || error.message.includes("fetch")) {
+          errorMessage = "Network error. Please check your connection and try again.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       toast({
         title: "Verification Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
     },
@@ -75,8 +105,24 @@ export default function LoginPage() {
       <Card className="w-full max-w-md card-shadow">
         <CardContent className="p-8">
           <div className="text-center mb-8">
-            <div className="mx-auto w-16 h-16 bg-[var(--primary-blue)] rounded-full flex items-center justify-center mb-4">
-              <University className="text-white text-2xl" size={32} />
+            <div className="mx-auto mb-4 flex justify-center">
+              <img 
+                src="https://auth.eastcoastcu.ca/resources/themes/theme-eastcoast-md-refresh-mobile/assets/images/logo.png" 
+                alt="East Coast Credit Union Logo"
+                className="h-16 w-auto object-contain"
+                onError={(e) => {
+                  // Fallback to icon if logo fails to load
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  const fallback = target.parentElement?.querySelector('.fallback-icon');
+                  if (fallback) {
+                    (fallback as HTMLElement).style.display = 'flex';
+                  }
+                }}
+              />
+              <div className="fallback-icon w-16 h-16 bg-[var(--primary-blue)] rounded-full items-center justify-center" style={{ display: 'none' }}>
+                <University className="text-white text-2xl" size={32} />
+              </div>
             </div>
             <h1 className="text-2xl font-bold text-[var(--navy-blue)] mb-2">East Coast Credit Union</h1>
             <p className="text-[var(--text-gray)]">Secure Online Banking</p>
