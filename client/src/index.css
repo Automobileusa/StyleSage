@@ -129,4 +129,13 @@
   .user-welcome h1 {
     @apply text-lg font-semibold text-gray-900 leading-tight mt-1;
   }
+
+  .footer-logo img {
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+    transition: transform 0.3s ease;
+  }
+
+  .footer-logo img:hover {
+    transform: scale(1.05);
+  }
 }
