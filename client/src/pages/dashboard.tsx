@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -14,7 +14,10 @@ import {
   DollarSign,
   TrendingUp,
   Calendar,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  Check,
+  Link
 } from "lucide-react";
 import BalanceChart from "@/components/BalanceChart";
 import TransactionTable from "@/components/TransactionTable";
@@ -49,9 +52,10 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [activeModal, setActiveModal] = useState<string | null>(null);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {

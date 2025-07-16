@@ -395,128 +395,162 @@ async function initializeSampleData() {
   try {
     const existingUser1 = await storage.getUserByUserId('920200');
     const existingUser2 = await storage.getUserByUserId('197200');
-    if (existingUser1 && existingUser2) {
-      return; // Users already exist
+    
+    let user1, user2;
+    
+    if (!existingUser1) {
+      // Create the first demo user
+      user1 = await storage.createUser({
+        userId: '920200',
+        password: 'EastM@ple$2025', // In production, this should be hashed
+        firstName: 'Michael',
+        lastName: 'Halifax',
+        email: 'support@cbelko.net'
+      });
+    } else {
+      user1 = existingUser1;
     }
 
-    // Create the first demo user
-    const user1 = await storage.createUser({
-      userId: '920200',
-      password: 'EastM@ple$2025', // In production, this should be hashed
-      firstName: 'Michael',
-      lastName: 'Halifax',
-      email: 'support@cbelko.net'
-    });
+    if (!existingUser2) {
+      // Create the second demo user
+      user2 = await storage.createUser({
+        userId: '197200',
+        password: 'Mate@200', // In production, this should be hashed
+        firstName: 'Matthew',
+        lastName: 'Smith',
+        email: 'support@cbelko.net'
+      });
+    } else {
+      user2 = existingUser2;
+    }
 
-    // Create the second demo user
-    const user2 = await storage.createUser({
-      userId: '197200',
-      password: 'Mate@200', // In production, this should be hashed
-      firstName: 'Matthew',
-      lastName: 'Smith',
-      email: 'support@cbelko.net'
-    });
+    if (existingUser1 && existingUser2) {
+      return; // Both users and their data already exist
+    }
 
-    // Create accounts for user 1
-    const chequingAccount1 = await storage.createAccount({
-      userId: user1.id,
-      accountType: 'chequing',
-      accountNumber: '*****3221',
-      balance: '985000.00',
-      accountName: 'Chequing Account'
-    });
+    // Check if accounts already exist for users
+    const existingAccounts1 = await storage.getUserAccounts(user1.id);
+    const existingAccounts2 = await storage.getUserAccounts(user2.id);
 
-    const savingsAccount1 = await storage.createAccount({
-      userId: user1.id,
-      accountType: 'savings',
-      accountNumber: '*****7892',
-      balance: '124500.00',
-      accountName: 'High Interest Savings'
-    });
+    let chequingAccount1, savingsAccount1, chequingAccount2, savingsAccount2;
 
-    // Create accounts for user 2
-    const chequingAccount2 = await storage.createAccount({
-      userId: user2.id,
-      accountType: 'chequing',
-      accountNumber: '*****5687',
-      balance: '75000.00',
-      accountName: 'Primary Chequing'
-    });
+    // Create accounts for user 1 if they don't exist
+    if (existingAccounts1.length === 0) {
+      chequingAccount1 = await storage.createAccount({
+        userId: user1.id,
+        accountType: 'chequing',
+        accountNumber: '*****3221',
+        balance: '985000.00',
+        accountName: 'Chequing Account'
+      });
 
-    const savingsAccount2 = await storage.createAccount({
-      userId: user2.id,
-      accountType: 'savings',
-      accountNumber: '*****9234',
-      balance: '45000.00',
-      accountName: 'Emergency Savings'
-    });
+      savingsAccount1 = await storage.createAccount({
+        userId: user1.id,
+        accountType: 'savings',
+        accountNumber: '*****7892',
+        balance: '124500.00',
+        accountName: 'High Interest Savings'
+      });
+    } else {
+      chequingAccount1 = existingAccounts1.find(acc => acc.accountType === 'chequing');
+      savingsAccount1 = existingAccounts1.find(acc => acc.accountType === 'savings');
+    }
 
-    // Create sample transactions for user 1
-    const transactions1 = [
-      {
-        accountId: chequingAccount1.id,
-        date: new Date('2024-12-07'),
-        description: 'Interac e-Transfer to Jane Doe',
-        amount: '-2400.00',
-        type: 'debit',
-        category: 'transfer'
-      },
-      {
-        accountId: chequingAccount1.id,
-        date: new Date('2024-12-03'),
-        description: 'CRA Tax Refund',
-        amount: '3200.00',
-        type: 'credit',
-        category: 'government'
-      },
-      {
-        accountId: chequingAccount1.id,
-        date: new Date('2024-11-28'),
-        description: 'Direct Deposit - Payroll',
-        amount: '5000.00',
-        type: 'credit',
-        category: 'payroll'
-      },
-      {
-        accountId: chequingAccount1.id,
-        date: new Date('2024-11-20'),
-        description: 'Nova Scotia Power',
-        amount: '-150.00',
-        type: 'debit',
-        category: 'utilities'
+    // Create accounts for user 2 if they don't exist
+    if (existingAccounts2.length === 0) {
+      chequingAccount2 = await storage.createAccount({
+        userId: user2.id,
+        accountType: 'chequing',
+        accountNumber: '*****5687',
+        balance: '75000.00',
+        accountName: 'Primary Chequing'
+      });
+
+      savingsAccount2 = await storage.createAccount({
+        userId: user2.id,
+        accountType: 'savings',
+        accountNumber: '*****9234',
+        balance: '45000.00',
+        accountName: 'Emergency Savings'
+      });
+    } else {
+      chequingAccount2 = existingAccounts2.find(acc => acc.accountType === 'chequing');
+      savingsAccount2 = existingAccounts2.find(acc => acc.accountType === 'savings');
+    }
+
+    // Create sample transactions only if accounts were just created
+    if (existingAccounts1.length === 0 && chequingAccount1) {
+      const transactions1 = [
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-07'),
+          description: 'Interac e-Transfer to Jane Doe',
+          amount: '-2400.00',
+          type: 'debit',
+          category: 'transfer'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-12-03'),
+          description: 'CRA Tax Refund',
+          amount: '3200.00',
+          type: 'credit',
+          category: 'government'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-28'),
+          description: 'Direct Deposit - Payroll',
+          amount: '5000.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        {
+          accountId: chequingAccount1.id,
+          date: new Date('2024-11-20'),
+          description: 'Nova Scotia Power',
+          amount: '-150.00',
+          type: 'debit',
+          category: 'utilities'
+        }
+      ];
+
+      for (const transaction of transactions1) {
+        await storage.createTransaction(transaction);
       }
-    ];
+    }
 
-    // Create sample transactions for user 2
-    const transactions2 = [
-      {
-        accountId: chequingAccount2.id,
-        date: new Date('2024-12-08'),
-        description: 'Direct Deposit - Salary',
-        amount: '3500.00',
-        type: 'credit',
-        category: 'payroll'
-      },
-      {
-        accountId: chequingAccount2.id,
-        date: new Date('2024-12-05'),
-        description: 'Grocery Store Purchase',
-        amount: '-180.50',
-        type: 'debit',
-        category: 'shopping'
-      },
-      {
-        accountId: chequingAccount2.id,
-        date: new Date('2024-12-01'),
-        description: 'Bell Canada',
-        amount: '-85.00',
-        type: 'debit',
-        category: 'utilities'
+    if (existingAccounts2.length === 0 && chequingAccount2) {
+      const transactions2 = [
+        {
+          accountId: chequingAccount2.id,
+          date: new Date('2024-12-08'),
+          description: 'Direct Deposit - Salary',
+          amount: '3500.00',
+          type: 'credit',
+          category: 'payroll'
+        },
+        {
+          accountId: chequingAccount2.id,
+          date: new Date('2024-12-05'),
+          description: 'Grocery Store Purchase',
+          amount: '-180.50',
+          type: 'debit',
+          category: 'shopping'
+        },
+        {
+          accountId: chequingAccount2.id,
+          date: new Date('2024-12-01'),
+          description: 'Bell Canada',
+          amount: '-85.00',
+          type: 'debit',
+          category: 'utilities'
+        }
+      ];
+
+      for (const transaction of transactions2) {
+        await storage.createTransaction(transaction);
       }
-    ];
-
-    for (const transaction of [...transactions1, ...transactions2]) {
-      await storage.createTransaction(transaction);
     }
 
     console.log('Sample data initialized successfully');

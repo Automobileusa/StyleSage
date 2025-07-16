@@ -32,7 +32,7 @@ export default function LoginPage() {
     onError: (error: any) => {
       console.error("Login error:", error);
       let errorMessage = "Please check your credentials and try again.";
-      
+
       if (error?.message) {
         if (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Invalid credentials")) {
           errorMessage = "Invalid User ID or Password. Please check your credentials and try again.";
@@ -44,7 +44,7 @@ export default function LoginPage() {
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: "Login Failed",
         description: errorMessage,
@@ -64,7 +64,7 @@ export default function LoginPage() {
     onError: (error: any) => {
       console.error("OTP verification error:", error);
       let errorMessage = "Please check your verification code and try again.";
-      
+
       if (error?.message) {
         if (error.message.includes("401") || error.message.includes("Invalid OTP")) {
           errorMessage = "Invalid verification code. Please check the 6-digit code from your email and try again.";
@@ -76,7 +76,7 @@ export default function LoginPage() {
           errorMessage = error.message;
         }
       }
-      
+
       toast({
         title: "Verification Failed",
         description: errorMessage,
