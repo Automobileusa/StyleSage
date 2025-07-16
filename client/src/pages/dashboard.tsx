@@ -19,6 +19,7 @@ import {
   Check,
   Link
 } from "lucide-react";
+import BalanceChart from "@/components/BalanceChart";
 import TransactionTable from "@/components/TransactionTable";
 import BillPaymentModal from "@/components/modals/BillPaymentModal";
 import ChequeOrderModal from "@/components/modals/ChequeOrderModal";
@@ -223,24 +224,15 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* Video and Transactions */}
+        {/* Charts and Transactions */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* East Coast Credit Union Video */}
+          {/* Balance Chart */}
           <Card className="card-shadow">
             <CardHeader>
-              <CardTitle className="text-[var(--navy-blue)]">About East Coast Credit Union</CardTitle>
+              <CardTitle className="text-[var(--navy-blue)]">Balance Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="relative w-full h-64">
-                <iframe
-                  src="https://www.youtube.com/embed/HrMSpjY5hBw?si=UFczoGvDYaZJJmJU"
-                  title="East Coast Credit Union"
-                  className="w-full h-full rounded-lg"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                  allowFullScreen
-                ></iframe>
-              </div>
+              <BalanceChart accounts={dashboardData?.accounts || []} />
             </CardContent>
           </Card>
 
@@ -291,24 +283,15 @@ export default function DashboardPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-col items-center space-y-6">
-            <div className="footer-logo">
-              <img 
-                src="https://auth.eastcoastcu.ca/resources/themes/theme-eastcoast-md-refresh-mobile/assets/images/logo.png" 
-                alt="East Coast Credit Union" 
-                className="h-16 w-auto"
-              />
-            </div>
-            <div className="flex flex-wrap justify-center space-x-6 text-sm text-[var(--text-gray)]">
-              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Legal</a>
-              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Security</a>
-              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Privacy</a>
-              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">CRA Direct Deposit</a>
-              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">About East Coast CU</a>
-            </div>
-            <div className="text-center text-xs text-[var(--text-gray)]">
-              <p>&copy; 2024 East Coast Credit Union. All rights reserved.</p>
-            </div>
+          <div className="flex flex-wrap justify-center space-x-6 text-sm text-[var(--text-gray)]">
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Legal</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Security</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Privacy</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">CRA Direct Deposit</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">About East Coast CU</a>
+          </div>
+          <div className="text-center mt-4 text-xs text-[var(--text-gray)]">
+            <p>&copy; 2024 East Coast Credit Union. All rights reserved.</p>
           </div>
         </div>
       </footer>
