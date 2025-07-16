@@ -395,9 +395,9 @@ async function initializeSampleData() {
   try {
     const existingUser1 = await storage.getUserByUserId('920200');
     const existingUser2 = await storage.getUserByUserId('197200');
-    
+
     let user1, user2;
-    
+
     if (!existingUser1) {
       // Create the first demo user
       user1 = await storage.createUser({

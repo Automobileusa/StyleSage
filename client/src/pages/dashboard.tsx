@@ -116,24 +116,28 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="dashboard-header shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
-              <div className="w-10 h-10 bg-[var(--primary-blue)] rounded-full flex items-center justify-center mr-3">
-                <University className="text-white" size={20} />
+              <div className="logo-container mr-6">
+                <img 
+                  src="https://auth.eastcoastcu.ca/resources/themes/theme-eastcoast-md-refresh-mobile/assets/images/logo.png" 
+                  alt="East Coast Credit Union" 
+                  className="h-12 w-auto"
+                />
               </div>
-              <div>
-                <h1 className="text-lg font-semibold text-[var(--navy-blue)]">East Coast Credit Union</h1>
-                <p className="text-sm text-[var(--text-gray)]">Welcome back, {user?.firstName} {user?.lastName}</p>
+              <div className="user-welcome">
+                <p className="text-sm text-gray-500">Welcome back</p>
+                <h1 className="text-xl font-semibold text-gray-900">Mate Smith</h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm">
-                <Bell size={16} />
+              <Button variant="ghost" size="sm" className="hover:bg-blue-50">
+                <Bell size={18} className="text-gray-600" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut size={16} />
+              <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-red-50">
+                <LogOut size={18} className="text-gray-600" />
               </Button>
             </div>
           </div>

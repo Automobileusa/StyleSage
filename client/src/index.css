@@ -106,4 +106,27 @@
     transform: translateY(-50%);
     color: var(--text-gray);
   }
+
+  .dashboard-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-bottom: 2px solid var(--primary-blue);
+  }
+
+  .logo-container img {
+    max-height: 48px;
+    width: auto;
+    object-fit: contain;
+  }
+
+  .user-welcome {
+    @apply flex flex-col;
+  }
+
+  .user-welcome p {
+    @apply text-sm text-gray-500 leading-none;
+  }
+
+  .user-welcome h1 {
+    @apply text-lg font-semibold text-gray-900 leading-tight mt-1;
+  }
 }
