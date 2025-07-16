@@ -1,0 +1,278 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { 
+  University, 
+  Bell, 
+  LogOut, 
+  CreditCard, 
+  PiggyBank, 
+  FileText, 
+  Check, 
+  Link 
+} from "lucide-react";
+import { apiRequest } from "@/lib/queryClient";
+import BalanceChart from "@/components/BalanceChart";
+import TransactionTable from "@/components/TransactionTable";
+import BillPaymentModal from "@/components/modals/BillPaymentModal";
+import ChequeOrderModal from "@/components/modals/ChequeOrderModal";
+import ExternalAccountModal from "@/components/modals/ExternalAccountModal";
+import OTPVerificationModal from "@/components/modals/OTPVerificationModal";
+
+interface DashboardData {
+  accounts: Array<{
+    id: number;
+    accountType: string;
+    accountNumber: string;
+    balance: string;
+    accountName: string;
+  }>;
+  transactions: Array<{
+    id: number;
+    date: string;
+    description: string;
+    amount: string;
+    type: string;
+  }>;
+  externalAccounts: Array<{
+    id: number;
+    bankName: string;
+    accountNumber: string;
+    transitNumber: string;
+    institutionNumber: string;
+    status: string;
+  }>;
+}
+
+export default function Dashboard() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [activeModal, setActiveModal] = useState<string | null>(null);
+
+  const { data: dashboardData, isLoading } = useQuery<DashboardData>({
+    queryKey: ["/api/dashboard"],
+  });
+
+  const handleLogout = async () => {
+    try {
+      await apiRequest('POST', '/api/auth/logout');
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: "Logout Failed",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  const chequingAccount = dashboardData?.accounts.find(acc => acc.accountType === 'chequing');
+  const savingsAccount = dashboardData?.accounts.find(acc => acc.accountType === 'savings');
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-[var(--primary-blue)] rounded-full flex items-center justify-center mr-3">
+                <University className="text-white" size={20} />
+              </div>
+              <div>
+                <h1 className="text-lg font-semibold text-[var(--navy-blue)]">East Coast Credit Union</h1>
+                <p className="text-sm text-[var(--text-gray)]">Welcome back, {user?.firstName} {user?.lastName}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm">
+                <Bell size={16} />
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut size={16} />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Account Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {/* Chequing Account */}
+          {chequingAccount && (
+            <Card className="card-shadow border-l-4 border-[var(--primary-blue)]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--navy-blue)]">Chequing Account</h3>
+                  <CreditCard className="text-[var(--primary-blue)]" size={24} />
+                </div>
+                <div className="mb-4">
+                  <p className="text-3xl font-bold text-[var(--navy-blue)]">
+                    ${parseFloat(chequingAccount.balance).toLocaleString('en-CA', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-sm text-[var(--text-gray)]">Account: {chequingAccount.accountNumber}</p>
+                </div>
+                <Button className="w-full bg-[var(--primary-blue)] hover:bg-[var(--navy-blue)] text-white">
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Savings Account */}
+          {savingsAccount && (
+            <Card className="card-shadow border-l-4 border-[var(--accent-green)]">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-[var(--navy-blue)]">High Interest Savings</h3>
+                  <PiggyBank className="text-[var(--accent-green)]" size={24} />
+                </div>
+                <div className="mb-4">
+                  <p className="text-3xl font-bold text-[var(--navy-blue)]">
+                    ${parseFloat(savingsAccount.balance).toLocaleString('en-CA', { minimumFractionDigits: 2 })}
+                  </p>
+                  <p className="text-sm text-[var(--text-gray)]">Account: {savingsAccount.accountNumber}</p>
+                </div>
+                <Button className="w-full bg-[var(--accent-green)] hover:bg-green-600 text-white">
+                  View Details
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Actions */}
+          <Card className="card-shadow">
+            <CardContent className="p-6">
+              <h3 className="text-lg font-semibold text-[var(--navy-blue)] mb-4">Quick Actions</h3>
+              <div className="space-y-3">
+                <Button
+                  className="w-full bg-[var(--card-bg)] text-[var(--navy-blue)] hover:bg-gray-200 justify-start"
+                  variant="secondary"
+                  onClick={() => setActiveModal('billPayment')}
+                >
+                  <FileText className="mr-2" size={16} />
+                  Bill Payment
+                </Button>
+                <Button
+                  className="w-full bg-[var(--card-bg)] text-[var(--navy-blue)] hover:bg-gray-200 justify-start"
+                  variant="secondary"
+                  onClick={() => setActiveModal('chequeOrder')}
+                >
+                  <Check className="mr-2" size={16} />
+                  Order Cheques
+                </Button>
+                <Button
+                  className="w-full bg-[var(--card-bg)] text-[var(--navy-blue)] hover:bg-gray-200 justify-start"
+                  variant="secondary"
+                  onClick={() => setActiveModal('externalAccount')}
+                >
+                  <Link className="mr-2" size={16} />
+                  Link External Account
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts and Transactions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Balance Chart */}
+          <Card className="card-shadow">
+            <CardHeader>
+              <CardTitle className="text-[var(--navy-blue)]">Balance Overview</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <BalanceChart accounts={dashboardData?.accounts || []} />
+            </CardContent>
+          </Card>
+
+          {/* Recent Transactions */}
+          <Card className="card-shadow">
+            <CardHeader>
+              <CardTitle className="text-[var(--navy-blue)]">Recent Transactions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TransactionTable transactions={dashboardData?.transactions || []} />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* External Accounts */}
+        <Card className="card-shadow">
+          <CardHeader>
+            <CardTitle className="text-[var(--navy-blue)]">Linked External Accounts</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {dashboardData?.externalAccounts?.length ? (
+                dashboardData.externalAccounts.map((account) => (
+                  <div key={account.id} className="flex items-center justify-between p-4 bg-[var(--card-bg)] rounded-lg">
+                    <div>
+                      <p className="font-semibold text-[var(--navy-blue)]">{account.bankName}</p>
+                      <p className="text-sm text-[var(--text-gray)]">
+                        Account: {account.accountNumber} | Transit: {account.transitNumber} | Institution: {account.institutionNumber}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-sm ${
+                      account.status === 'verified' 
+                        ? 'bg-[var(--accent-green)] text-white' 
+                        : 'bg-yellow-500 text-white'
+                    }`}>
+                      {account.status === 'verified' ? 'Verified' : 'Pending'}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[var(--text-gray)]">No external accounts linked</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </main>
+
+      {/* Footer */}
+      <footer className="bg-white border-t border-gray-200 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-wrap justify-center space-x-6 text-sm text-[var(--text-gray)]">
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Legal</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Security</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Privacy</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">CRA Direct Deposit</a>
+            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">About East Coast CU</a>
+          </div>
+          <div className="text-center mt-4 text-xs text-[var(--text-gray)]">
+            <p>&copy; 2024 East Coast Credit Union. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* Modals */}
+      <BillPaymentModal 
+        isOpen={activeModal === 'billPayment'} 
+        onClose={() => setActiveModal(null)} 
+      />
+      <ChequeOrderModal 
+        isOpen={activeModal === 'chequeOrder'} 
+        onClose={() => setActiveModal(null)} 
+      />
+      <ExternalAccountModal 
+        isOpen={activeModal === 'externalAccount'} 
+        onClose={() => setActiveModal(null)} 
+      />
+      <OTPVerificationModal />
+    </div>
+  );
+}
