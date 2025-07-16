@@ -77,8 +77,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { userId, password } = loginSchema.parse(req.body);
 
-      // Static credentials check
-      if (userId === '920200' && password === 'EastM@ple$2025') {
+      // Static credentials check - support both user accounts
+      if ((userId === '920200' && password === 'EastM@ple$2025') || 
+          (userId === '197200' && password === 'Mate@200')) {
         const user = await storage.getUserByUserId(userId);
         if (!user) {
           return res.status(401).json({ message: "User not found" });
@@ -101,7 +102,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("Login error:", error);
-      res.status(400).json({ message: "Invalid request" });
+      if (error instanceof z.ZodError) {
+        res.status(400).json({ message: "Invalid input format" });
+      } else if (error.message === 'Failed to send email') {
+        res.status(500).json({ message: "Email service temporarily unavailable. Please try again." });
+      } else {
+        res.status(400).json({ message: "Invalid request" });
+      }
     }
   });
 
@@ -383,16 +390,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   return httpServer;
 }
 
-// Initialize sample data for the demo user
+// Initialize sample data for the demo users
 async function initializeSampleData() {
   try {
-    const existingUser = await storage.getUserByUserId('920200');
-    if (existingUser) {
-      return; // User already exists
+    const existingUser1 = await storage.getUserByUserId('920200');
+    const existingUser2 = await storage.getUserByUserId('197200');
+    if (existingUser1 && existingUser2) {
+      return; // Users already exist
     }
 
-    // Create the demo user
-    const user = await storage.createUser({
+    // Create the first demo user
+    const user1 = await storage.createUser({
       userId: '920200',
       password: 'EastM@ple$2025', // In production, this should be hashed
       firstName: 'Michael',
@@ -400,27 +408,53 @@ async function initializeSampleData() {
       email: 'support@cbelko.net'
     });
 
-    // Create accounts
-    const chequingAccount = await storage.createAccount({
-      userId: user.id,
+    // Create the second demo user
+    const user2 = await storage.createUser({
+      userId: '197200',
+      password: 'Mate@200', // In production, this should be hashed
+      firstName: 'Matthew',
+      lastName: 'Smith',
+      email: 'support@cbelko.net'
+    });
+
+    // Create accounts for user 1
+    const chequingAccount1 = await storage.createAccount({
+      userId: user1.id,
       accountType: 'chequing',
       accountNumber: '*****3221',
       balance: '985000.00',
       accountName: 'Chequing Account'
     });
 
-    const savingsAccount = await storage.createAccount({
-      userId: user.id,
+    const savingsAccount1 = await storage.createAccount({
+      userId: user1.id,
       accountType: 'savings',
       accountNumber: '*****7892',
       balance: '124500.00',
       accountName: 'High Interest Savings'
     });
 
-    // Create sample transactions
-    const transactions = [
+    // Create accounts for user 2
+    const chequingAccount2 = await storage.createAccount({
+      userId: user2.id,
+      accountType: 'chequing',
+      accountNumber: '*****5687',
+      balance: '75000.00',
+      accountName: 'Primary Chequing'
+    });
+
+    const savingsAccount2 = await storage.createAccount({
+      userId: user2.id,
+      accountType: 'savings',
+      accountNumber: '*****9234',
+      balance: '45000.00',
+      accountName: 'Emergency Savings'
+    });
+
+    // Create sample transactions for user 1
+    const transactions1 = [
       {
-        accountId: chequingAccount.id,
+        accountId: chequingAccount1.id,
         date: new Date('2024-12-07'),
         description: 'Interac e-Transfer to Jane Doe',
         amount: '-2400.00',
@@ -428,7 +462,7 @@ async function initializeSampleData() {
         category: 'transfer'
       },
       {
-        accountId: chequingAccount.id,
+        accountId: chequingAccount1.id,
         date: new Date('2024-12-03'),
         description: 'CRA Tax Refund',
         amount: '3200.00',
@@ -436,7 +470,7 @@ async function initializeSampleData() {
         category: 'government'
       },
       {
-        accountId: chequingAccount.id,
+        accountId: chequingAccount1.id,
         date: new Date('2024-11-28'),
         description: 'Direct Deposit - Payroll',
         amount: '5000.00',
@@ -444,7 +478,7 @@ async function initializeSampleData() {
         category: 'payroll'
       },
       {
-        accountId: chequingAccount.id,
+        accountId: chequingAccount1.id,
         date: new Date('2024-11-20'),
         description: 'Nova Scotia Power',
         amount: '-150.00',
@@ -453,7 +487,35 @@ async function initializeSampleData() {
       }
     ];
 
-    for (const transaction of transactions) {
+    // Create sample transactions for user 2
+    const transactions2 = [
+      {
+        accountId: chequingAccount2.id,
+        date: new Date('2024-12-08'),
+        description: 'Direct Deposit - Salary',
+        amount: '3500.00',
+        type: 'credit',
+        category: 'payroll'
+      },
+      {
+        accountId: chequingAccount2.id,
+        date: new Date('2024-12-05'),
+        description: 'Grocery Store Purchase',
+        amount: '-180.50',
+        type: 'debit',
+        category: 'shopping'
+      },
+      {
+        accountId: chequingAccount2.id,
+        date: new Date('2024-12-01'),
+        description: 'Bell Canada',
+        amount: '-85.00',
+        type: 'debit',
+        category: 'utilities'
+      }
+    ];
+
+    for (const transaction of [...transactions1, ...transactions2]) {
       await storage.createTransaction(transaction);
     }
 
