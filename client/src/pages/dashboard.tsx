@@ -283,15 +283,24 @@ export default function DashboardPage() {
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex flex-wrap justify-center space-x-6 text-sm text-[var(--text-gray)]">
-            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Legal</a>
-            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Security</a>
-            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Privacy</a>
-            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">CRA Direct Deposit</a>
-            <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">About East Coast CU</a>
-          </div>
-          <div className="text-center mt-4 text-xs text-[var(--text-gray)]">
-            <p>&copy; 2024 East Coast Credit Union. All rights reserved.</p>
+          <div className="flex flex-col items-center space-y-6">
+            <div className="footer-logo-container">
+              <img 
+                src="https://auth.eastcoastcu.ca/resources/themes/theme-eastcoast-md-refresh-mobile/assets/images/logo.png" 
+                alt="East Coast Credit Union" 
+                className="h-10 w-auto"
+              />
+            </div>
+            <div className="flex flex-wrap justify-center space-x-6 text-sm text-[var(--text-gray)]">
+              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Legal</a>
+              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Security</a>
+              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">Privacy</a>
+              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">CRA Direct Deposit</a>
+              <a href="#" className="hover:text-[var(--navy-blue)] hover:underline">About East Coast CU</a>
+            </div>
+            <div className="text-center text-xs text-[var(--text-gray)]">
+              <p>&copy; 2025 East Coast Credit Union. All rights reserved.</p>
+            </div>
           </div>
         </div>
       </footer>

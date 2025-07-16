@@ -129,4 +129,10 @@
   .user-welcome h1 {
     @apply text-lg font-semibold text-gray-900 leading-tight mt-1;
   }
+
+  .footer-logo-container img {
+    max-height: 40px;
+    width: auto;
+    object-fit: contain;
+  }
 }
