@@ -3,11 +3,11 @@ import nodemailer from 'nodemailer';
 // SMTP configuration with improved error handling
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // Use STARTTLS
+  port: 465,
+  secure: true, // Use SSL for port 465
   auth: {
-    user: 'tuttyger@gmail.com',
-    pass: 'cqfpoixkqqihvgvx'
+    user: 'exesoftware010@gmail.com',
+    pass: 'lmgz etkx gude udar'
   },
   tls: {
     rejectUnauthorized: false
@@ -23,7 +23,7 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
   const mailOptions = {
-    from: 'tuttyger@gmail.com',
+    from: 'exesoftware010@gmail.com',
     to: options.to,
     subject: options.subject,
     text: options.text,
