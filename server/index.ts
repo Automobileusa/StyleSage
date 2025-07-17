@@ -1,4 +1,11 @@
 // server/index.ts
+import dotenv from 'dotenv';
+
+// Load .env only in non-production (i.e. locally)
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+  console.log('🔧 Loaded local .env:', process.env.DATABASE_URL ? 'OK' : 'MISSING');
+}
 
 import express, { Request, Response, NextFunction } from 'express';
 import { setupVite, serveStatic, log } from './vite';
