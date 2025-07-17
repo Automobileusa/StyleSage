@@ -39,6 +39,7 @@ export interface IStorage {
   getAccount(id: number): Promise<Account | undefined>;
   createAccount(account: InsertAccount): Promise<Account>;
   updateAccountBalance(accountId: number, newBalance: string): Promise<void>;
+  updateAccount(accountId: number, updates: Partial<Account>): Promise<Account | undefined>;
 
   // Transaction operations
   getAccountTransactions(accountId: number, limit?: number): Promise<Transaction[]>;
@@ -93,7 +94,7 @@ export class DatabaseStorage implements IStorage {
     // Hash the password before storing
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(insertUser.password, saltRounds);
-    
+
     const [user] = await db
       .insert(users)
       .values({
@@ -131,6 +132,15 @@ export class DatabaseStorage implements IStorage {
       .update(accounts)
       .set({ balance: newBalance })
       .where(eq(accounts.id, accountId));
+  }
+
+  async updateAccount(accountId: number, updates: Partial<Account>) {
+    const [account] = await db
+      .update(accounts)
+      .set(updates)
+      .where(eq(accounts.id, accountId))
+      .returning();
+    return account;
   }
 
   // Transaction operations
@@ -378,7 +388,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(microDeposits)
       .where(eq(microDeposits.externalAccountId, id));
-    
+
     // Delete the external account
     await db
       .delete(externalAccounts)
