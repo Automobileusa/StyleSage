@@ -1,14 +1,19 @@
 // server/index.ts
-import dotenv from 'dotenv';
-
-// Load .env only in non-production (i.e. locally)
-if (process.env.NODE_ENV !== 'production') {
-  dotenv.config();
-  console.log('🔧 Loaded local .env:', process.env.DATABASE_URL ? 'OK' : 'MISSING');
-}
 
 import express, { Request, Response, NextFunction } from 'express';
 import { setupVite, serveStatic, log } from './vite';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dynamically load dotenv only in non-production (local dev):
+if (process.env.NODE_ENV !== 'production') {
+  const { default: dotenv } = await import('dotenv');
+  dotenv.config();
+  console.log(
+    '🔧 Loaded local .env:',
+    process.env.DATABASE_URL ? 'OK' : '❌ MISSING DATABASE_URL'
+  );
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 const app = express();
 
@@ -42,7 +47,7 @@ app.use((req, res, next) => {
 (async () => {
   console.log('🚀 Starting app…');
 
-  // ⚠️ Runtime check for DATABASE_URL
+  // Runtime check for DATABASE_URL (from Render or your local .env)
   if (!process.env.DATABASE_URL) {
     console.error('❌ DATABASE_URL is not defined. Exiting.');
     process.exit(1);
