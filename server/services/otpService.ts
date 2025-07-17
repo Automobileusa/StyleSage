@@ -38,11 +38,14 @@ export async function createAndSendOtp(
   try {
     const recentOtps = await storage.getRecentOtpCodes(sanitizedUserId, 5); // Get OTPs from last 5 minutes
     if (recentOtps && recentOtps.length >= 3) {
-      throw new Error('Too many OTP requests. Please wait before requesting another.');
+      throw new Error('Too many OTP requests. Please wait 5 minutes before requesting another.');
     }
   } catch (error) {
+    if (error.message.includes('Too many OTP requests')) {
+      throw error; // Re-throw rate limiting errors
+    }
     console.error('Error checking recent OTPs:', error);
-    // Continue with OTP generation if check fails
+    // Continue with OTP generation if database check fails
   }
 
   const code = generateOtp();

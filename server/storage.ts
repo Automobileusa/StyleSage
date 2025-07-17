@@ -50,6 +50,7 @@ export interface IStorage {
   createOtpCode(otp: InsertOtpCode): Promise<OtpCode>;
   getValidOtpCode(userId: string, code: string, purpose: string): Promise<OtpCode | undefined>;
   markOtpCodeUsed(id: number): Promise<void>;
+  getRecentOtpCodes(userId: string, minutesBack?: number): Promise<any[]>;
 
   // Bill payment operations
   createBillPayment(billPayment: InsertBillPayment): Promise<BillPayment>;
@@ -243,6 +244,28 @@ export class DatabaseStorage implements IStorage {
       .update(otpCodes)
       .set({ used: true })
       .where(eq(otpCodes.id, id));
+  }
+
+  async getRecentOtpCodes(userId: string, minutesBack: number = 5): Promise<any[]> {
+    try {
+      const cutoffTime = new Date(Date.now() - minutesBack * 60 * 1000);
+
+      const recentOtps = await db
+        .select()
+        .from(otpCodes)
+        .where(
+          and(
+            eq(otpCodes.userId, userId),
+            gte(otpCodes.createdAt, cutoffTime)
+          )
+        )
+        .orderBy(desc(otpCodes.createdAt));
+
+      return recentOtps;
+    } catch (error) {
+      console.error('Error fetching recent OTP codes:', error);
+      return [];
+    }
   }
 
   // Bill payment operations

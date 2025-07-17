@@ -110,117 +110,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      // Input validation and sanitization
-      const validatedData = loginSchema.parse(req.body);
-      const userId = sanitizeInput(validatedData.userId);
-      const password = sanitizeInput(validatedData.password);
+      const loginSchema = z.object({ 
+        userId: z.string().min(1).max(50),
+        password: z.string().min(1).max(100)
+      });
 
-      // Additional validation
-      if (!userId || !password) {
-        return res.status(400).json({ 
-          message: "User ID and password are required",
-          error: "MISSING_CREDENTIALS" 
-        });
-      }
+      const { userId, password } = loginSchema.parse(req.body);
+      const sanitizedUserId = sanitizeInput(userId);
+      const sanitizedPassword = sanitizeInput(password);
 
-      if (userId.length > 20 || password.length > 50) {
-        return res.status(400).json({ 
-          message: "Invalid input length",
-          error: "INVALID_LENGTH" 
-        });
-      }
+      const user = await storage.getUser(sanitizedUserId);
 
-      // Rate limiting check (simple in-memory approach)
-      const clientIP = req.ip || req.connection.remoteAddress;
-      const loginKey = `login_${clientIP}`;
-      
-      // Static credentials check - support both user accounts
-      if ((userId === '1972000' && password === 'Mate@200') || 
-          (userId === '197200' && password === 'Mate@200')) {
-        
-        let user;
-        try {
-          user = await storage.getUserByUserId(userId);
-        } catch (dbError) {
-          console.error("Database error during user lookup:", dbError);
-          return res.status(500).json({ 
-            message: "Database error. Please try again.",
-            error: "DATABASE_ERROR" 
-          });
-        }
-
-        if (!user) {
-          return res.status(401).json({ 
-            message: "User not found",
-            error: "USER_NOT_FOUND" 
-          });
-        }
-
-        // Validate user data
-        if (!user.firstName || !user.lastName || !user.id) {
-          console.error("Invalid user data:", user);
-          return res.status(500).json({ 
-            message: "User data integrity error",
-            error: "USER_DATA_ERROR" 
-          });
-        }
-
-        try {
-          // Generate and send OTP
-          await createAndSendOtp(
-            user.id,
-            'noreply@autosmobile.us', // Fixed recipient as per requirements
-            `${sanitizeInput(user.firstName)} ${sanitizeInput(user.lastName)}`,
-            'Login'
-          );
-
-          // Store temp login data in session with validation
-          if (!req.session) {
-            return res.status(500).json({ 
-              message: "Session initialization error",
-              error: "SESSION_ERROR" 
-            });
-          }
-
-          req.session.tempUserId = user.id;
-          req.session.loginTimestamp = new Date().toISOString();
-
-          res.json({ success: true, message: "OTP sent to your email" });
-        } catch (otpError) {
-          console.error("OTP generation/sending error:", otpError);
-          if (otpError.message === 'Failed to send email') {
-            return res.status(503).json({ 
-              message: "Email service temporarily unavailable. Please try again.",
-              error: "EMAIL_SERVICE_ERROR" 
-            });
-          }
-          return res.status(500).json({ 
-            message: "OTP service error. Please try again.",
-            error: "OTP_ERROR" 
-          });
-        }
-      } else {
-        // Log failed login attempts for security monitoring
-        console.warn(`Failed login attempt for userId: ${userId} from IP: ${clientIP}`);
-        
+      if (!user || !bcrypt.compareSync(sanitizedPassword, user.passwordHash)) {
         return res.status(401).json({ 
           message: "Invalid credentials",
           error: "INVALID_CREDENTIALS" 
         });
       }
+
+      // Ensure session exists
+      if (!req.session) {
+        return res.status(500).json({ 
+          message: "Session initialization failed",
+          error: "SESSION_ERROR" 
+        });
+      }
+
+      // Store temporary session data for OTP verification
+      req.session.tempUserId = sanitizedUserId;
+      req.session.loginTimestamp = new Date().toISOString();
+
+      // Save session explicitly
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+        }
+      });
+
+      // Generate and send OTP
+      try {
+        await createAndSendOtp(sanitizedUserId, user.email, user.firstName, 'Login');
+        res.json({ success: true, message: "OTP sent to your email" });
+      } catch (emailError) {
+        console.error("Email service error:", emailError);
+        return res.status(500).json({ 
+          message: "Email service temporarily unavailable",
+          error: "EMAIL_SERVICE_ERROR" 
+        });
+      }
     } catch (error) {
       console.error("Login error:", error);
+
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
-          message: "Invalid input format",
+          message: "Invalid input data",
           error: "VALIDATION_ERROR",
           details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
         });
       }
-      
-      return res.status(500).json({ 
-        message: "Internal server error",
-        error: "INTERNAL_ERROR" 
+
+      res.status(500).json({ 
+        message: "Database error occurred",
+        error: "DATABASE_ERROR" 
       });
     }
   });
@@ -231,7 +182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const otpSchema = z.object({ 
         code: z.string().length(6).regex(/^\d{6}$/, "OTP must be 6 digits") 
       });
-      
+
       const { code } = otpSchema.parse(req.body);
       const sanitizedCode = sanitizeInput(code);
 
@@ -295,7 +246,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           delete req.session.loginTimestamp;
 
           const user = await storage.getUser(tempUserId);
-          
+
           if (!user) {
             return res.status(404).json({ 
               message: "User not found after authentication",
@@ -323,7 +274,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Log failed OTP attempts
         const clientIP = req.ip || req.connection.remoteAddress;
         console.warn(`Failed OTP verification for userId: ${tempUserId} from IP: ${clientIP}`);
-        
+
         res.status(401).json({ 
           message: "Invalid verification code",
           error: "INVALID_OTP"
@@ -331,7 +282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("OTP verification error:", error);
-      
+
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           message: "Invalid OTP format",
@@ -339,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
         });
       }
-      
+
       res.status(500).json({ 
         message: "Internal server error",
         error: "INTERNAL_ERROR" 
@@ -393,7 +344,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ]);
 
       let accounts, transactions, externalAccounts;
-      
+
       try {
         [accounts, transactions, externalAccounts] = await Promise.race([
           dataPromise,
@@ -401,14 +352,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ]) as any;
       } catch (dbError) {
         console.error("Database error in dashboard:", dbError);
-        
+
         if (dbError.message === 'Database operation timeout') {
           return res.status(504).json({ 
             message: "Database operation timed out",
             error: "DATABASE_TIMEOUT" 
           });
         }
-        
+
         return res.status(500).json({ 
           message: "Database error",
           error: "DATABASE_ERROR" 
@@ -459,10 +410,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limit = parseInt(req.query.limit) || 20;
       const offset = parseInt(req.query.offset) || 0;
       const year = req.query.year ? parseInt(req.query.year) : null;
-      
+
       const transactions = await storage.getUserTransactionsPaginated(userId, limit, offset, year);
       const totalCount = await storage.getUserTransactionsCount(userId, year);
-      
+
       res.json({
         transactions,
         totalCount,
