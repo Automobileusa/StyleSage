@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TransactionTable from "@/components/TransactionTable";
+import { useCallback } from "react";
 
 export default function TransactionsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -45,20 +45,17 @@ export default function TransactionsPage() {
     }
   }, [dashboardError, toast, setLocation]);
 
-  const handleBackToDashboard = () => {
+  const [, setLocation] = useLocation();
+
+  const handleBackToDashboard = useCallback(() => {
     try {
-      setLocation("/");
+      setLocation('/dashboard');
     } catch (error) {
-      console.error("Navigation error:", error);
-      toast({
-        title: "Navigation Error",
-        description: "Unable to navigate back. Please try again.",
-        variant: "destructive",
-      });
-      // Fallback navigation
-      window.location.href = "/";
+      console.error('Navigation error:', error);
+      // Fallback to direct navigation
+      window.location.href = '/dashboard';
     }
-  };
+  }, [setLocation]);
 
   // Show loading state
   if (authLoading || dashboardLoading) {
