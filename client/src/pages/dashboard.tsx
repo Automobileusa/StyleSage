@@ -19,6 +19,7 @@ import {
   Check,
   Link
 } from "lucide-react";
+import { Link as RouterLink } from "wouter";
 import BalanceChart from "@/components/BalanceChart";
 import TransactionTable from "@/components/TransactionTable";
 import BillPaymentModal from "@/components/modals/BillPaymentModal";
@@ -238,8 +239,13 @@ export default function DashboardPage() {
 
           {/* Recent Transactions */}
           <Card className="card-shadow">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-[var(--navy-blue)]">Recent Transactions</CardTitle>
+              <RouterLink href="/transactions">
+                <Button variant="outline" size="sm" className="text-[var(--primary-blue)] border-[var(--primary-blue)] hover:bg-[var(--primary-blue)] hover:text-white">
+                  View All
+                </Button>
+              </RouterLink>
             </CardHeader>
             <CardContent>
               <TransactionTable transactions={dashboardData?.transactions || []} />

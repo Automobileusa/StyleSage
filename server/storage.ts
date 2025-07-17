@@ -25,7 +25,7 @@ import {
   type InsertMicroDeposit,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, gte } from "drizzle-orm";
+import { eq, and, desc, gte, count } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -42,6 +42,8 @@ export interface IStorage {
   // Transaction operations
   getAccountTransactions(accountId: number, limit?: number): Promise<Transaction[]>;
   getUserTransactions(userId: string, limit?: number): Promise<Transaction[]>;
+  getUserTransactionsPaginated(userId: string, limit: number, offset: number, year?: number | null): Promise<Transaction[]>;
+  getUserTransactionsCount(userId: string, year?: number | null): Promise<number>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
 
   // OTP operations
@@ -148,6 +150,59 @@ export class DatabaseStorage implements IStorage {
       .where(eq(accounts.userId, userId))
       .orderBy(desc(transactions.date))
       .limit(limit);
+  }
+
+  async getUserTransactionsPaginated(userId: string, limit: number, offset: number, year?: number | null): Promise<Transaction[]> {
+    let query = db
+      .select({
+        id: transactions.id,
+        accountId: transactions.accountId,
+        date: transactions.date,
+        description: transactions.description,
+        amount: transactions.amount,
+        type: transactions.type,
+        category: transactions.category,
+        createdAt: transactions.createdAt,
+      })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(eq(accounts.userId, userId));
+
+    if (year) {
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year + 1, 0, 1);
+      query = query.where(and(
+        eq(accounts.userId, userId),
+        gte(transactions.date, startOfYear),
+        gte(endOfYear, transactions.date)
+      ));
+    }
+
+    return await query
+      .orderBy(desc(transactions.date))
+      .limit(limit)
+      .offset(offset);
+  }
+
+  async getUserTransactionsCount(userId: string, year?: number | null): Promise<number> {
+    let query = db
+      .select({ count: count(transactions.id) })
+      .from(transactions)
+      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .where(eq(accounts.userId, userId));
+
+    if (year) {
+      const startOfYear = new Date(year, 0, 1);
+      const endOfYear = new Date(year + 1, 0, 1);
+      query = query.where(and(
+        eq(accounts.userId, userId),
+        gte(transactions.date, startOfYear),
+        gte(endOfYear, transactions.date)
+      ));
+    }
+
+    const result = await query;
+    return result[0]?.count || 0;
   }
 
   async createTransaction(transaction: InsertTransaction): Promise<Transaction> {
