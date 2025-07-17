@@ -1,5 +1,7 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
+import { useLocation } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -17,7 +19,8 @@ import {
   ExternalLink,
   FileText,
   Check,
-  Link
+  Link,
+  AlertCircle
 } from "lucide-react";
 import { Link as RouterLink } from "wouter";
 import BalanceChart from "@/components/BalanceChart";
@@ -53,10 +56,18 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [activeModal, setActiveModal] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setLocation("/");
+    }
+  }, [isAuthenticated, setLocation]);
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
@@ -65,7 +76,7 @@ export default function DashboardPage() {
     },
     onSuccess: () => {
       queryClient.clear();
-      window.location.reload();
+      setLocation("/");
     },
     onError: (error: any) => {
       console.error("Logout error:", error);
@@ -74,18 +85,37 @@ export default function DashboardPage() {
         description: "There was an error logging out. Please try again.",
         variant: "destructive",
       });
+      // Force logout even if server request fails
+      queryClient.clear();
+      setLocation("/");
     },
   });
 
   const handleLogout = () => {
-    logoutMutation.mutate();
+    try {
+      logoutMutation.mutate();
+    } catch (error) {
+      console.error("Logout initiation error:", error);
+      // Fallback logout
+      queryClient.clear();
+      setLocation("/");
+    }
   };
 
-  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError } = useQuery({
+  const { data: dashboardData, isLoading: isDashboardLoading, error: dashboardError, refetch } = useQuery({
     queryKey: ["/api/dashboard"],
-    enabled: !!user,
+    enabled: !!user && !!isAuthenticated,
     retry: 2,
     retryDelay: 1000,
+    queryFn: async () => {
+      try {
+        const response = await apiRequest('GET', '/api/dashboard');
+        return await response.json();
+      } catch (error: any) {
+        console.error("Dashboard fetch error:", error);
+        throw error;
+      }
+    }
   });
 
   // Handle dashboard loading error
@@ -100,12 +130,38 @@ export default function DashboardPage() {
     }
   }, [dashboardError, toast]);
 
+  // Show loading state
   if (!user || isDashboardLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full mx-auto mb-4"></div>
           <p className="text-[var(--text-gray)]">Loading your banking dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (dashboardError) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-[var(--text-primary)] mb-2">
+            Dashboard Error
+          </h2>
+          <p className="text-[var(--text-gray)] mb-4">
+            Unable to load dashboard data. Please try refreshing.
+          </p>
+          <div className="space-x-2">
+            <Button onClick={() => refetch()} variant="outline">
+              Retry
+            </Button>
+            <Button onClick={handleLogout} variant="outline">
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -130,14 +186,22 @@ export default function DashboardPage() {
               </div>
               <div className="user-welcome">
                 <p className="text-sm text-gray-500">Welcome back</p>
-                <h1 className="text-xl font-semibold text-gray-900">Mate Smith</h1>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Mate Smith'}
+                </h1>
               </div>
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" className="hover:bg-blue-50">
                 <Bell size={18} className="text-gray-600" />
               </Button>
-              <Button variant="ghost" size="sm" onClick={handleLogout} className="hover:bg-red-50">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout} 
+                className="hover:bg-red-50"
+                disabled={logoutMutation.isPending}
+              >
                 <LogOut size={18} className="text-gray-600" />
               </Button>
             </div>

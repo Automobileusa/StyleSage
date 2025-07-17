@@ -1,21 +1,51 @@
+
 import { Switch, Route } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/useAuth";
+import { useEffect } from "react";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
 import TransactionsPage from "@/pages/transactions";
 import NotFound from "@/pages/not-found";
 
 function Router() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, error } = useAuth();
 
+  // Log authentication state for debugging
+  useEffect(() => {
+    console.log('Auth state:', { isAuthenticated, isLoading, error });
+  }, [isAuthenticated, isLoading, error]);
+
+  // Show loading spinner while checking authentication
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center">
+          <div className="spinner w-8 h-8 border-4 border-[var(--primary-blue)] border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-[var(--text-gray)]">Loading application...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show authentication error if any
+  if (error) {
+    console.error('Authentication error:', error);
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg-primary)]">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600 mb-2">Authentication Error</h2>
+          <p className="text-[var(--text-gray)] mb-4">Please refresh the page and try again.</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-4 py-2 bg-[var(--primary-blue)] text-white rounded hover:bg-[var(--navy-blue)]"
+          >
+            Refresh Page
+          </button>
+        </div>
       </div>
     );
   }
@@ -23,19 +53,43 @@ function Router() {
   return (
     <Switch>
       {!isAuthenticated ? (
-        <Route path="/" component={LoginPage} />
+        <>
+          <Route path="/" component={LoginPage} />
+          <Route path="/login" component={LoginPage} />
+          <Route component={LoginPage} />
+        </>
       ) : (
         <>
           <Route path="/" component={Dashboard} />
+          <Route path="/dashboard" component={Dashboard} />
           <Route path="/transactions" component={TransactionsPage} />
+          <Route component={NotFound} />
         </>
       )}
-      <Route component={NotFound} />
     </Switch>
   );
 }
 
 function App() {
+  // Global error handler
+  useEffect(() => {
+    const handleGlobalError = (event: ErrorEvent) => {
+      console.error('Global error:', event.error);
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled promise rejection:', event.reason);
+    };
+
+    window.addEventListener('error', handleGlobalError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+
+    return () => {
+      window.removeEventListener('error', handleGlobalError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
