@@ -5,6 +5,7 @@ import session from "express-session";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import connectPg from "connect-pg-simple";
+import MemoryStore from "memorystore";
 import { 
   insertBillPaymentSchema,
   insertChequeOrderSchema,
@@ -22,24 +23,31 @@ function sanitizeInput(input: string): string {
 // Session configuration
 function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
-  const pgStore = connectPg(session);
-  const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
-    createTableIfMissing: false,
+  
+  // Use memory store for development to avoid session persistence issues
+  const MemoryStoreSession = MemoryStore(session);
+  const sessionStore = new MemoryStoreSession({
+    checkPeriod: 86400000, // prune expired entries every 24h
     ttl: sessionTtl,
-    tableName: "sessions",
+  });
+
+  // Add error handling for session store
+  sessionStore.on('error', (error) => {
+    console.error('Session store error:', error);
   });
 
   return session({
-    secret: process.env.SESSION_SECRET || 'fallback-secret-key',
+    secret: process.env.SESSION_SECRET || 'fallback-secret-key-for-dev',
     store: sessionStore,
-    resave: true, // Changed to true to ensure session data is saved
+    resave: false, // Don't force save
     saveUninitialized: false,
-    rolling: true, // Extend session on each request
+    rolling: false, // Don't extend session on each request to avoid conflicts
+    name: 'sessionId', // Custom session name
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: sessionTtl,
+      sameSite: 'lax', // Better compatibility
     },
   });
 }
