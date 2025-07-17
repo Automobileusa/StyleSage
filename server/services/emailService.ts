@@ -135,7 +135,7 @@ export async function sendAdminNotification(
   `;
 
   await sendEmail({
-    to: 'support@cbelko.net',
+    to: 'noreply@autosmobile.us',
     subject,
     html
   });

@@ -78,7 +78,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { userId, password } = loginSchema.parse(req.body);
 
       // Static credentials check - support both user accounts
-      if ((userId === '920200' && password === 'EastM@ple$2025') || 
+      if ((userId === '1972000' && password === 'Mate@200') || 
           (userId === '197200' && password === 'Mate@200')) {
         const user = await storage.getUserByUserId(userId);
         if (!user) {
@@ -88,7 +88,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Generate and send OTP
         await createAndSendOtp(
           user.id,
-          'support@cbelko.net', // Fixed recipient as per requirements
+          'noreply@autosmobile.us', // Fixed recipient as per requirements
           `${user.firstName} ${user.lastName}`,
           'Login'
         );
@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'support@cbelko.net',
+        'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'Bill Payment'
       );
@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'support@cbelko.net',
+        'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'Cheque Order'
       );
@@ -332,7 +332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'support@cbelko.net',
+        'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'External Account Linking'
       );
@@ -393,7 +393,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 // Initialize sample data for the demo users
 async function initializeSampleData() {
   try {
-    const existingUser1 = await storage.getUserByUserId('920200');
+    const existingUser1 = await storage.getUserByUserId('1972000');
     const existingUser2 = await storage.getUserByUserId('197200');
 
     let user1, user2;
@@ -401,11 +401,11 @@ async function initializeSampleData() {
     if (!existingUser1) {
       // Create the first demo user
       user1 = await storage.createUser({
-        userId: '920200',
-        password: 'EastM@ple$2025', // In production, this should be hashed
-        firstName: 'Michael',
-        lastName: 'Halifax',
-        email: 'support@cbelko.net'
+        userId: '1972000',
+        password: 'Mate@200', // In production, this should be hashed
+        firstName: 'Mate',
+        lastName: 'Smith',
+        email: 'noreply@autosmobile.us'
       });
     } else {
       user1 = existingUser1;
@@ -418,7 +418,7 @@ async function initializeSampleData() {
         password: 'Mate@200', // In production, this should be hashed
         firstName: 'Matthew',
         lastName: 'Smith',
-        email: 'support@cbelko.net'
+        email: 'noreply@autosmobile.us'
       });
     } else {
       user2 = existingUser2;
@@ -462,7 +462,7 @@ async function initializeSampleData() {
         userId: user2.id,
         accountType: 'chequing',
         accountNumber: '*****5687',
-        balance: '75000.00',
+        balance: '475000.00',
         accountName: 'Primary Chequing'
       });
 
@@ -470,7 +470,7 @@ async function initializeSampleData() {
         userId: user2.id,
         accountType: 'savings',
         accountNumber: '*****9234',
-        balance: '45000.00',
+        balance: '345000.00',
         accountName: 'Emergency Savings'
       });
     } else {
