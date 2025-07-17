@@ -33,8 +33,9 @@ function getSession() {
   return session({
     secret: process.env.SESSION_SECRET || 'fallback-secret-key',
     store: sessionStore,
-    resave: false,
+    resave: true, // Changed to true to ensure session data is saved
     saveUninitialized: false,
+    rolling: true, // Extend session on each request
     cookie: {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -140,18 +141,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.tempUserId = user.id;
       req.session.loginTimestamp = new Date().toISOString();
 
-      // Save session explicitly and wait for completion
-      await new Promise((resolve, reject) => {
-        req.session.save((err) => {
-          if (err) {
-            console.error("Session save error:", err);
-            reject(err);
-          } else {
-            console.log("Session saved successfully for user:", user.userId);
-            resolve(true);
+      // Save session explicitly and wait for completion with retry logic
+      let sessionSaved = false;
+      let retries = 0;
+      const maxRetries = 3;
+
+      while (!sessionSaved && retries < maxRetries) {
+        try {
+          await new Promise((resolve, reject) => {
+            req.session.save((err) => {
+              if (err) {
+                console.error(`Session save error (attempt ${retries + 1}):`, err);
+                reject(err);
+              } else {
+                console.log("Session saved successfully for user:", user.userId, "Session ID:", req.session.id);
+                resolve(true);
+              }
+            });
+          });
+          sessionSaved = true;
+        } catch (saveError) {
+          retries++;
+          if (retries >= maxRetries) {
+            console.error("Failed to save session after", maxRetries, "attempts");
+            return res.status(500).json({ 
+              message: "Session save failed",
+              error: "SESSION_SAVE_ERROR" 
+            });
           }
-        });
-      });
+          // Wait briefly before retry
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
 
       // Generate and send OTP
       try {
@@ -207,15 +228,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionId: req.session.id,
         tempUserId,
         loginTimestamp,
-        hasSession: !!req.session
+        hasSession: !!req.session,
+        sessionData: req.session
       });
 
       if (!tempUserId) {
-        console.log("No tempUserId found in session");
-        return res.status(400).json({ 
-          message: "No login session found",
-          error: "NO_LOGIN_SESSION" 
+        console.log("No tempUserId found in session. Full session data:", req.session);
+        
+        // Try to reload the session from store
+        await new Promise((resolve) => {
+          req.session.reload((err) => {
+            if (err) {
+              console.error("Session reload error:", err);
+            } else {
+              console.log("Session reloaded. New data:", req.session);
+            }
+            resolve(true);
+          });
         });
+
+        const reloadedTempUserId = req.session.tempUserId;
+        if (!reloadedTempUserId) {
+          return res.status(400).json({ 
+            message: "No login session found",
+            error: "NO_LOGIN_SESSION" 
+          });
+        }
+        
+        // Use the reloaded tempUserId
+        console.log("Found tempUserId after reload:", reloadedTempUserId);
       }
 
       // Check session timeout (15 minutes)
@@ -240,9 +281,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Use the current tempUserId (which might have been reloaded)
+      const currentTempUserId = req.session.tempUserId;
+      
       let isValid;
       try {
-        isValid = await verifyOtp(tempUserId, sanitizedCode, 'Login');
+        isValid = await verifyOtp(currentTempUserId, sanitizedCode, 'Login');
       } catch (otpError) {
         console.error("OTP verification error:", otpError);
         return res.status(500).json({ 
@@ -254,12 +298,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (isValid) {
         try {
           // Set authenticated session
-          req.session.userId = tempUserId;
+          req.session.userId = currentTempUserId;
           req.session.authenticatedAt = new Date().toISOString();
           delete req.session.tempUserId;
           delete req.session.loginTimestamp;
 
-          const user = await storage.getUser(tempUserId);
+          const user = await storage.getUser(currentTempUserId);
 
           if (!user) {
             return res.status(404).json({ 
