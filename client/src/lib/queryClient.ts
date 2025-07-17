@@ -7,20 +7,105 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+const API_BASE_URL = "";
+
 export async function apiRequest(
   method: string,
-  url: string,
-  data?: unknown | undefined,
+  endpoint: string,
+  data?: any
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  // Input validation
+  if (!method || typeof method !== 'string') {
+    throw new Error('Invalid HTTP method');
+  }
 
-  await throwIfResNotOk(res);
-  return res;
+  if (!endpoint || typeof endpoint !== 'string') {
+    throw new Error('Invalid API endpoint');
+  }
+
+  // Sanitize endpoint
+  const sanitizedEndpoint = endpoint.trim();
+  if (!sanitizedEndpoint.startsWith('/api/')) {
+    throw new Error('Invalid API endpoint format');
+  }
+
+  const config: RequestInit = {
+    method: method.toUpperCase(),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    credentials: "include", // Important for sessions
+    timeout: 30000, // 30 second timeout
+  };
+
+  if (data) {
+    try {
+      config.body = JSON.stringify(data);
+    } catch (serializationError) {
+      throw new Error('Invalid request data format');
+    }
+  }
+
+  let response: Response;
+
+  try {
+    // Add timeout handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+    config.signal = controller.signal;
+
+    response = await fetch(`${API_BASE_URL}${sanitizedEndpoint}`, config);
+
+    clearTimeout(timeoutId);
+  } catch (error: any) {
+    if (error.name === 'AbortError') {
+      throw new Error('Request timeout. Please try again.');
+    }
+
+    if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+      throw new Error('Network error. Please check your connection and try again.');
+    }
+
+    throw new Error(`Request failed: ${error.message}`);
+  }
+
+  if (!response.ok) {
+    let errorData: string;
+
+    try {
+      errorData = await response.text();
+    } catch (textError) {
+      throw new Error(`${response.status}: ${response.statusText}`);
+    }
+
+    let message = `${response.status}: ${response.statusText}`;
+    let errorCode = 'UNKNOWN_ERROR';
+
+    try {
+      const parsedError = JSON.parse(errorData);
+      if (parsedError.message) {
+        message = parsedError.message;
+      }
+      if (parsedError.error) {
+        errorCode = parsedError.error;
+      }
+    } catch {
+      // If parsing fails, use the raw text
+      if (errorData) {
+        message = errorData;
+      }
+    }
+
+    // Add error code to the error for better handling
+    const error = new Error(message) as any;
+    error.code = errorCode;
+    error.status = response.status;
+
+    throw error;
+  }
+
+  return response;
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";

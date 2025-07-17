@@ -22,19 +22,57 @@ export interface EmailOptions {
 }
 
 export async function sendEmail(options: EmailOptions): Promise<void> {
+  // Input validation and sanitization
+  if (!options.to || typeof options.to !== 'string') {
+    throw new Error('Invalid recipient email address');
+  }
+
+  if (!options.subject || typeof options.subject !== 'string') {
+    throw new Error('Invalid email subject');
+  }
+
+  // Email format validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(options.to)) {
+    throw new Error('Invalid email format');
+  }
+
+  // Sanitize inputs
+  const sanitizedOptions = {
+    to: options.to.trim(),
+    subject: options.subject.trim().substring(0, 200), // Limit subject length
+    text: options.text ? options.text.trim().substring(0, 10000) : undefined,
+    html: options.html ? options.html.trim().substring(0, 50000) : undefined
+  };
+
   const mailOptions = {
     from: 'exesoftware010@gmail.com',
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html
+    to: sanitizedOptions.to,
+    subject: sanitizedOptions.subject,
+    text: sanitizedOptions.text,
+    html: sanitizedOptions.html
   };
 
   try {
-    await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully to ${options.to}`);
+    // Add timeout for email sending
+    const emailPromise = transporter.sendMail(mailOptions);
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('Email send timeout')), 30000);
+    });
+
+    await Promise.race([emailPromise, timeoutPromise]);
+    console.log(`Email sent successfully to ${sanitizedOptions.to}`);
   } catch (error) {
     console.error('Error sending email:', error);
+    
+    if (error.message === 'Email send timeout') {
+      throw new Error('Email service timeout. Please try again.');
+    }
+    
+    if (error.code === 'EAUTH' || error.code === 'ENOTFOUND') {
+      throw new Error('Email authentication failed');
+    }
+    
     throw new Error('Failed to send email');
   }
 }

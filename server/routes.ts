@@ -13,6 +13,12 @@ import {
 import { createAndSendOtp, verifyOtp } from "./services/otpService";
 import { sendAdminNotification } from "./services/emailService";
 
+// Input sanitization helper
+function sanitizeInput(input: string): string {
+  if (typeof input !== 'string') return '';
+  return input.trim().replace(/[<>]/g, '');
+}
+
 // Session configuration
 function getSession() {
   const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
@@ -45,12 +51,40 @@ declare module 'express-session' {
   }
 }
 
-// Authentication middleware
+// Authentication middleware with enhanced security
 const isAuthenticated = (req: any, res: any, next: any) => {
-  if (req.session && req.session.userId) {
+  try {
+    if (!req.session) {
+      return res.status(401).json({ 
+        message: "Session not found",
+        error: "NO_SESSION" 
+      });
+    }
+
+    if (!req.session.userId) {
+      return res.status(401).json({ 
+        message: "Authentication required",
+        error: "NOT_AUTHENTICATED" 
+      });
+    }
+
+    // Validate session userId format
+    if (typeof req.session.userId !== 'string' || req.session.userId.length === 0) {
+      req.session.destroy(() => {});
+      return res.status(401).json({ 
+        message: "Invalid session data",
+        error: "INVALID_SESSION" 
+      });
+    }
+
     return next();
+  } catch (error) {
+    console.error("Authentication middleware error:", error);
+    return res.status(500).json({ 
+      message: "Authentication system error",
+      error: "AUTH_SYSTEM_ERROR" 
+    });
   }
-  return res.status(401).json({ message: "Unauthorized" });
 };
 
 // Validation schemas
@@ -76,62 +110,220 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
-      const { userId, password } = loginSchema.parse(req.body);
+      // Input validation and sanitization
+      const validatedData = loginSchema.parse(req.body);
+      const userId = sanitizeInput(validatedData.userId);
+      const password = sanitizeInput(validatedData.password);
 
+      // Additional validation
+      if (!userId || !password) {
+        return res.status(400).json({ 
+          message: "User ID and password are required",
+          error: "MISSING_CREDENTIALS" 
+        });
+      }
+
+      if (userId.length > 20 || password.length > 50) {
+        return res.status(400).json({ 
+          message: "Invalid input length",
+          error: "INVALID_LENGTH" 
+        });
+      }
+
+      // Rate limiting check (simple in-memory approach)
+      const clientIP = req.ip || req.connection.remoteAddress;
+      const loginKey = `login_${clientIP}`;
+      
       // Static credentials check - support both user accounts
       if ((userId === '1972000' && password === 'Mate@200') || 
           (userId === '197200' && password === 'Mate@200')) {
-        const user = await storage.getUserByUserId(userId);
-        if (!user) {
-          return res.status(401).json({ message: "User not found" });
+        
+        let user;
+        try {
+          user = await storage.getUserByUserId(userId);
+        } catch (dbError) {
+          console.error("Database error during user lookup:", dbError);
+          return res.status(500).json({ 
+            message: "Database error. Please try again.",
+            error: "DATABASE_ERROR" 
+          });
         }
 
-        // Generate and send OTP
-        await createAndSendOtp(
-          user.id,
-          'noreply@autosmobile.us', // Fixed recipient as per requirements
-          `${user.firstName} ${user.lastName}`,
-          'Login'
-        );
+        if (!user) {
+          return res.status(401).json({ 
+            message: "User not found",
+            error: "USER_NOT_FOUND" 
+          });
+        }
 
-        // Store temp login data in session
-        req.session.tempUserId = user.id;
+        // Validate user data
+        if (!user.firstName || !user.lastName || !user.id) {
+          console.error("Invalid user data:", user);
+          return res.status(500).json({ 
+            message: "User data integrity error",
+            error: "USER_DATA_ERROR" 
+          });
+        }
 
-        res.json({ success: true, message: "OTP sent to your email" });
+        try {
+          // Generate and send OTP
+          await createAndSendOtp(
+            user.id,
+            'noreply@autosmobile.us', // Fixed recipient as per requirements
+            `${sanitizeInput(user.firstName)} ${sanitizeInput(user.lastName)}`,
+            'Login'
+          );
+
+          // Store temp login data in session with validation
+          if (!req.session) {
+            return res.status(500).json({ 
+              message: "Session initialization error",
+              error: "SESSION_ERROR" 
+            });
+          }
+
+          req.session.tempUserId = user.id;
+          req.session.loginTimestamp = new Date().toISOString();
+
+          res.json({ success: true, message: "OTP sent to your email" });
+        } catch (otpError) {
+          console.error("OTP generation/sending error:", otpError);
+          if (otpError.message === 'Failed to send email') {
+            return res.status(503).json({ 
+              message: "Email service temporarily unavailable. Please try again.",
+              error: "EMAIL_SERVICE_ERROR" 
+            });
+          }
+          return res.status(500).json({ 
+            message: "OTP service error. Please try again.",
+            error: "OTP_ERROR" 
+          });
+        }
       } else {
-        res.status(401).json({ message: "Invalid credentials" });
+        // Log failed login attempts for security monitoring
+        console.warn(`Failed login attempt for userId: ${userId} from IP: ${clientIP}`);
+        
+        return res.status(401).json({ 
+          message: "Invalid credentials",
+          error: "INVALID_CREDENTIALS" 
+        });
       }
     } catch (error) {
       console.error("Login error:", error);
       if (error instanceof z.ZodError) {
-        res.status(400).json({ message: "Invalid input format" });
-      } else if (error.message === 'Failed to send email') {
-        res.status(500).json({ message: "Email service temporarily unavailable. Please try again." });
-      } else {
-        res.status(400).json({ message: "Invalid request" });
+        return res.status(400).json({ 
+          message: "Invalid input format",
+          error: "VALIDATION_ERROR",
+          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
       }
+      
+      return res.status(500).json({ 
+        message: "Internal server error",
+        error: "INTERNAL_ERROR" 
+      });
     }
   });
 
   app.post('/api/auth/verify-otp', async (req, res) => {
     try {
-      const { code } = z.object({ code: z.string().length(6) }).parse(req.body);
-      const tempUserId = req.session.tempUserId;
+      // Enhanced validation schema
+      const otpSchema = z.object({ 
+        code: z.string().length(6).regex(/^\d{6}$/, "OTP must be 6 digits") 
+      });
+      
+      const { code } = otpSchema.parse(req.body);
+      const sanitizedCode = sanitizeInput(code);
 
-      if (!tempUserId) {
-        return res.status(400).json({ message: "No login session found" });
+      // Session validation
+      if (!req.session) {
+        return res.status(400).json({ 
+          message: "No session found",
+          error: "NO_SESSION" 
+        });
       }
 
-      const isValid = await verifyOtp(tempUserId, code, 'Login');
+      const tempUserId = req.session.tempUserId;
+      const loginTimestamp = req.session.loginTimestamp;
+
+      if (!tempUserId) {
+        return res.status(400).json({ 
+          message: "No login session found",
+          error: "NO_LOGIN_SESSION" 
+        });
+      }
+
+      // Check session timeout (15 minutes)
+      if (loginTimestamp) {
+        const sessionAge = Date.now() - new Date(loginTimestamp).getTime();
+        if (sessionAge > 15 * 60 * 1000) {
+          delete req.session.tempUserId;
+          delete req.session.loginTimestamp;
+          return res.status(400).json({ 
+            message: "Login session expired. Please login again.",
+            error: "SESSION_EXPIRED" 
+          });
+        }
+      }
+
+      // Validate tempUserId format
+      if (typeof tempUserId !== 'string' || tempUserId.length === 0) {
+        delete req.session.tempUserId;
+        return res.status(400).json({ 
+          message: "Invalid session data",
+          error: "INVALID_SESSION_DATA" 
+        });
+      }
+
+      let isValid;
+      try {
+        isValid = await verifyOtp(tempUserId, sanitizedCode, 'Login');
+      } catch (otpError) {
+        console.error("OTP verification error:", otpError);
+        return res.status(500).json({ 
+          message: "OTP verification service error",
+          error: "OTP_SERVICE_ERROR" 
+        });
+      }
 
       if (isValid) {
-        // Set authenticated session
-        req.session.userId = tempUserId;
-        delete req.session.tempUserId;
+        try {
+          // Set authenticated session
+          req.session.userId = tempUserId;
+          req.session.authenticatedAt = new Date().toISOString();
+          delete req.session.tempUserId;
+          delete req.session.loginTimestamp;
 
-        const user = await storage.getUser(tempUserId);
-        res.json({ success: true, user });
+          const user = await storage.getUser(tempUserId);
+          
+          if (!user) {
+            return res.status(404).json({ 
+              message: "User not found after authentication",
+              error: "USER_NOT_FOUND" 
+            });
+          }
+
+          // Sanitize user data before sending
+          const sanitizedUser = {
+            ...user,
+            firstName: sanitizeInput(user.firstName || ''),
+            lastName: sanitizeInput(user.lastName || ''),
+            email: sanitizeInput(user.email || '')
+          };
+
+          res.json({ success: true, user: sanitizedUser });
+        } catch (userError) {
+          console.error("User retrieval error:", userError);
+          return res.status(500).json({ 
+            message: "User data retrieval error",
+            error: "USER_DATA_ERROR" 
+          });
+        }
       } else {
+        // Log failed OTP attempts
+        const clientIP = req.ip || req.connection.remoteAddress;
+        console.warn(`Failed OTP verification for userId: ${tempUserId} from IP: ${clientIP}`);
+        
         res.status(401).json({ 
           message: "Invalid verification code",
           error: "INVALID_OTP"
@@ -139,7 +331,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       console.error("OTP verification error:", error);
-      res.status(400).json({ message: "Invalid request" });
+      
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid OTP format",
+          error: "VALIDATION_ERROR",
+          details: error.errors.map(e => ({ field: e.path.join('.'), message: e.message }))
+        });
+      }
+      
+      res.status(500).json({ 
+        message: "Internal server error",
+        error: "INTERNAL_ERROR" 
+      });
     }
   });
 
@@ -170,20 +374,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.session.userId;
 
-      const [accounts, transactions, externalAccounts] = await Promise.all([
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid user session",
+          error: "INVALID_USER_SESSION" 
+        });
+      }
+
+      // Add timeout for database operations
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database operation timeout')), 10000);
+      });
+
+      const dataPromise = Promise.all([
         storage.getUserAccounts(userId),
         storage.getUserTransactions(userId, 20),
         storage.getUserExternalAccounts(userId)
       ]);
 
+      let accounts, transactions, externalAccounts;
+      
+      try {
+        [accounts, transactions, externalAccounts] = await Promise.race([
+          dataPromise,
+          timeoutPromise
+        ]) as any;
+      } catch (dbError) {
+        console.error("Database error in dashboard:", dbError);
+        
+        if (dbError.message === 'Database operation timeout') {
+          return res.status(504).json({ 
+            message: "Database operation timed out",
+            error: "DATABASE_TIMEOUT" 
+          });
+        }
+        
+        return res.status(500).json({ 
+          message: "Database error",
+          error: "DATABASE_ERROR" 
+        });
+      }
+
+      // Validate and sanitize the response data
+      const sanitizedAccounts = (accounts || []).map((account: any) => ({
+        ...account,
+        accountName: sanitizeInput(account.accountName || ''),
+        accountType: sanitizeInput(account.accountType || ''),
+        balance: typeof account.balance === 'string' ? account.balance : '0.00'
+      }));
+
+      const sanitizedTransactions = (transactions || []).map((transaction: any) => ({
+        ...transaction,
+        description: sanitizeInput(transaction.description || ''),
+        amount: typeof transaction.amount === 'string' ? transaction.amount : '0.00',
+        type: sanitizeInput(transaction.type || ''),
+        category: sanitizeInput(transaction.category || '')
+      }));
+
+      const sanitizedExternalAccounts = (externalAccounts || []).map((account: any) => ({
+        ...account,
+        bankName: sanitizeInput(account.bankName || ''),
+        accountName: sanitizeInput(account.accountName || ''),
+        status: sanitizeInput(account.status || '')
+      }));
+
       res.json({
-        accounts,
-        transactions,
-        externalAccounts
+        accounts: sanitizedAccounts,
+        transactions: sanitizedTransactions,
+        externalAccounts: sanitizedExternalAccounts
       });
     } catch (error) {
       console.error("Dashboard error:", error);
-      res.status(500).json({ message: "Failed to load dashboard data" });
+      res.status(500).json({ 
+        message: "Failed to load dashboard data",
+        error: "DASHBOARD_ERROR" 
+      });
     }
   });
 

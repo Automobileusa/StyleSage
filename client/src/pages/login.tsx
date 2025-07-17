@@ -34,14 +34,34 @@ export default function LoginPage() {
       let errorMessage = "Please check your credentials and try again.";
 
       if (error?.message) {
-        if (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Invalid credentials")) {
-          errorMessage = "Invalid User ID or Password. Please check your credentials and try again.";
-        } else if (error.message.includes("Network") || error.message.includes("fetch")) {
-          errorMessage = "Network error. Please check your connection and try again.";
-        } else if (error.message.includes("timeout")) {
-          errorMessage = "Request timed out. Please try again.";
-        } else {
-          errorMessage = error.message;
+        const errorCode = (error as any)?.code;
+        
+        switch (errorCode) {
+          case 'INVALID_CREDENTIALS':
+            errorMessage = "Invalid User ID or Password. Please check your credentials and try again.";
+            break;
+          case 'USER_NOT_FOUND':
+            errorMessage = "User account not found. Please contact support.";
+            break;
+          case 'EMAIL_SERVICE_ERROR':
+            errorMessage = "Email service is temporarily unavailable. Please try again later.";
+            break;
+          case 'VALIDATION_ERROR':
+            errorMessage = "Please check your input and try again.";
+            break;
+          case 'DATABASE_ERROR':
+            errorMessage = "System temporarily unavailable. Please try again later.";
+            break;
+          default:
+            if (error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Invalid credentials")) {
+              errorMessage = "Invalid User ID or Password. Please check your credentials and try again.";
+            } else if (error.message.includes("Network") || error.message.includes("fetch") || error.message.includes("connection")) {
+              errorMessage = "Network error. Please check your connection and try again.";
+            } else if (error.message.includes("timeout")) {
+              errorMessage = "Request timed out. Please try again.";
+            } else {
+              errorMessage = error.message;
+            }
         }
       }
 
@@ -64,6 +84,32 @@ export default function LoginPage() {
     onError: (error: any) => {
       console.error("OTP verification error:", error);
       let errorMessage = "Please check your verification code and try again.";
+      
+      const errorCode = error?.code;
+      
+      switch (errorCode) {
+        case 'INVALID_OTP':
+          errorMessage = "Invalid verification code. Please check and try again.";
+          break;
+        case 'SESSION_EXPIRED':
+          errorMessage = "Your session has expired. Please login again.";
+          break;
+        case 'NO_LOGIN_SESSION':
+          errorMessage = "No active login session. Please start the login process again.";
+          break;
+        case 'OTP_SERVICE_ERROR':
+          errorMessage = "Verification service error. Please try again.";
+          break;
+        case 'USER_DATA_ERROR':
+          errorMessage = "User data error. Please contact support.";
+          break;
+        default:
+          if (error.message.includes("Invalid verification code") || error.message.includes("Invalid OTP")) {
+            errorMessage = "Invalid verification code. Please check and try again.";
+          } else if (error.message.includes("expired") || error.message.includes("timeout")) {
+            errorMessage = "Verification code has expired. Please request a new one.";
+          }
+      }
 
       if (error?.message) {
         if (error.message.includes("401") || error.message.includes("Invalid OTP")) {
