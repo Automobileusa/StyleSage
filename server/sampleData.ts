@@ -48,7 +48,7 @@ export async function initializeSampleData() {
       chequingAccount1 = await storage.createAccount({
         userId: user1.id,
         accountType: 'chequing',
-        accountNumber: '*****3221',
+        accountNumber: '35103221',
         balance: '1245000.00',
         accountName: 'Chequing Account'
       });
@@ -56,7 +56,7 @@ export async function initializeSampleData() {
       savingsAccount1 = await storage.createAccount({
         userId: user1.id,
         accountType: 'savings',
-        accountNumber: '*****7892',
+        accountNumber: '35107892',
         balance: '375000.00',
         accountName: 'High Interest Savings'
       });
@@ -70,7 +70,7 @@ export async function initializeSampleData() {
       chequingAccount2 = await storage.createAccount({
         userId: user2.id,
         accountType: 'chequing',
-        accountNumber: '*****5687',
+        accountNumber: '35205687',
         balance: '875000.00',
         accountName: 'Primary Chequing'
       });
@@ -78,7 +78,7 @@ export async function initializeSampleData() {
       savingsAccount2 = await storage.createAccount({
         userId: user2.id,
         accountType: 'savings',
-        accountNumber: '*****9234',
+        accountNumber: '35209234',
         balance: '525000.00',
         accountName: 'Emergency Savings'
       });
@@ -121,7 +121,7 @@ export async function initializeSampleData() {
         { accountId: chequingAccount1.id, date: new Date('2025-06-20'), description: 'Pet Valu Supplies', amount: '-78.45', type: 'debit', category: 'pets' },
         { accountId: chequingAccount1.id, date: new Date('2025-06-19'), description: 'Interac e-Transfer to Sarah', amount: '-300.00', type: 'debit', category: 'transfer' },
         { accountId: chequingAccount1.id, date: new Date('2025-06-18'), description: 'Home Depot Building Supplies', amount: '-245.67', type: 'debit', category: 'home' },
-        
+
         // 2024 transactions (December)
         { accountId: chequingAccount1.id, date: new Date('2024-12-31'), description: 'Year-end Bonus', amount: '2500.00', type: 'credit', category: 'payroll' },
         { accountId: chequingAccount1.id, date: new Date('2024-12-30'), description: 'LCBO Holiday Purchase', amount: '-89.45', type: 'debit', category: 'shopping' },
@@ -195,7 +195,7 @@ export async function initializeSampleData() {
         { accountId: chequingAccount2.id, date: new Date('2025-06-20'), description: 'Global Pet Foods', amount: '-56.78', type: 'debit', category: 'pets' },
         { accountId: chequingAccount2.id, date: new Date('2025-06-19'), description: 'Interac e-Transfer to Mike', amount: '-200.00', type: 'debit', category: 'transfer' },
         { accountId: chequingAccount2.id, date: new Date('2025-06-18'), description: 'Kent Building Supplies', amount: '-178.45', type: 'debit', category: 'home' },
-        
+
         // 2024 transactions for user 2
         { accountId: chequingAccount2.id, date: new Date('2024-12-31'), description: 'Holiday Bonus', amount: '1500.00', type: 'credit', category: 'payroll' },
         { accountId: chequingAccount2.id, date: new Date('2024-12-30'), description: 'Sobeys Wine', amount: '-67.89', type: 'debit', category: 'shopping' },
