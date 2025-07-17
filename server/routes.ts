@@ -119,9 +119,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const sanitizedUserId = sanitizeInput(userId);
       const sanitizedPassword = sanitizeInput(password);
 
-      const user = await storage.getUser(sanitizedUserId);
-
-      if (!user || !bcrypt.compareSync(sanitizedPassword, user.passwordHash)) {
+      const user = await storage.getUserByUserId(sanitizedUserId);
+      
+      if (!user || !bcrypt.compareSync(sanitizedPassword, user.password)) {
         return res.status(401).json({ 
           message: "Invalid credentials",
           error: "INVALID_CREDENTIALS" 
@@ -137,7 +137,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Store temporary session data for OTP verification
-      req.session.tempUserId = sanitizedUserId;
+      req.session.tempUserId = user.id;
       req.session.loginTimestamp = new Date().toISOString();
 
       // Save session explicitly
@@ -149,7 +149,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate and send OTP
       try {
-        await createAndSendOtp(sanitizedUserId, user.email, user.firstName, 'Login');
+        await createAndSendOtp(user.id, user.email, user.firstName, 'Login');
         res.json({ success: true, message: "OTP sent to your email" });
       } catch (emailError) {
         console.error("Email service error:", emailError);
