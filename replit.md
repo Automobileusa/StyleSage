@@ -129,5 +129,8 @@ Preferred communication style: Simple, everyday language.
 - ✓ Fixed login session persistence issue for OTP verification
 - ✓ Updated second user profile: changed name from "Matthew Smith" to "Martha Hodge"
 - ✓ Improved session handling with better error logging and session saving
+- ✓ Enhanced email notification system with proper user-specific routing
+- ✓ Added confirmation emails for bill payments, cheque orders, and external account verification
+- ✓ Updated OTP emails to send to correct user email addresses instead of hardcoded fallback
 
 The application follows Canadian banking standards and terminology, including proper formatting for account numbers, transit numbers, and institution numbers. The UI is designed to match East Coast Credit Union's branding with their signature blue color scheme and professional appearance.

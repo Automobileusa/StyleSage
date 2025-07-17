@@ -124,6 +124,54 @@ export async function sendOtpEmail(
   });
 }
 
+export async function sendUserNotification(
+  userEmail: string,
+  userName: string,
+  action: string,
+  details: any
+): Promise<void> {
+  const subject = `East Coast Credit Union - ${action} Confirmation`;
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: linear-gradient(135deg, #0072ce 0%, #003e6b 100%); padding: 20px; text-align: center;">
+        <h1 style="color: white; margin: 0;">East Coast Credit Union</h1>
+        <p style="color: white; margin: 5px 0;">Secure Online Banking</p>
+      </div>
+
+      <div style="padding: 30px; background: white;">
+        <h2 style="color: #003e6b; margin-bottom: 20px;">${action} Confirmation</h2>
+
+        <p>Dear ${userName},</p>
+
+        <p>Your ${action.toLowerCase()} request has been successfully processed.</p>
+
+        <div style="background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 8px;">
+          <h3 style="color: #003e6b; margin-top: 0;">Details:</h3>
+          ${Object.entries(details).map(([key, value]) => `
+            <p style="margin: 5px 0;"><strong>${key}:</strong> ${value}</p>
+          `).join('')}
+        </div>
+
+        <p>If you have any questions about this transaction, please contact our customer service team.</p>
+
+        <p>Best regards,<br>East Coast Credit Union</p>
+      </div>
+
+      <div style="background: #f0f0f0; padding: 15px; text-align: center; font-size: 12px; color: #6e6e6e;">
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; 2024 East Coast Credit Union. All rights reserved.</p>
+      </div>
+    </div>
+  `;
+
+  await sendEmail({
+    to: userEmail,
+    subject,
+    html
+  });
+}
+
 export async function sendAdminNotification(
   action: string,
   userData: any,
@@ -153,6 +201,10 @@ export async function sendAdminNotification(
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">User ID:</td>
             <td style="padding: 8px; border-bottom: 1px solid #eee;">${userData.userId}</td>
+          </tr>
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">User Email:</td>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">${userData.email}</td>
           </tr>
           <tr>
             <td style="padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;">Time:</td>

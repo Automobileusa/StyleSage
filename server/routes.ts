@@ -12,7 +12,7 @@ import {
   insertExternalAccountSchema 
 } from "@shared/schema";
 import { createAndSendOtp, verifyOtp } from "./services/otpService";
-import { sendAdminNotification } from "./services/emailService";
+import { sendAdminNotification, sendUserNotification } from "./services/emailService";
 
 // Input sanitization helper
 function sanitizeInput(input: string): string {
@@ -560,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'noreply@autosmobile.us',
+        user!.email || 'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'Bill Payment'
       );
@@ -597,6 +597,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           currentBillPayment
         );
 
+        // Send user confirmation email
+        await sendUserNotification(
+          user!.email || 'noreply@autosmobile.us',
+          `${user!.firstName} ${user!.lastName}`,
+          'Bill Payment',
+          {
+            'Payee': currentBillPayment?.payeeName || 'Unknown',
+            'Amount': `$${currentBillPayment?.amount || '0.00'}`,
+            'Payment Date': currentBillPayment?.paymentDate || 'N/A',
+            'Status': 'Completed'
+          }
+        );
+
         res.json({ success: true });
       } else {
         res.status(401).json({ message: "Invalid OTP" });
@@ -629,7 +642,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'noreply@autosmobile.us',
+        user!.email || 'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'Cheque Order'
       );
@@ -662,6 +675,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           'Cheque Order',
           user!,
           currentOrder
+        );
+
+        // Send user confirmation email
+        await sendUserNotification(
+          user!.email || 'noreply@autosmobile.us',
+          `${user!.firstName} ${user!.lastName}`,
+          'Cheque Order',
+          {
+            'Quantity': `${currentOrder?.quantity || 0} cheques`,
+            'Delivery Address': currentOrder?.deliveryAddress || 'N/A',
+            'Status': 'Processing',
+            'Expected Delivery': '3-5 business days'
+          }
         );
 
         res.json({ success: true });
@@ -706,7 +732,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const user = await storage.getUser(userId);
       await createAndSendOtp(
         userId,
-        'noreply@autosmobile.us',
+        user!.email || 'noreply@autosmobile.us',
         `${user!.firstName} ${user!.lastName}`,
         'External Account Linking'
       );
@@ -749,6 +775,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (microDeposit) {
           await storage.verifyMicroDeposit(microDeposit.id);
         }
+
+        // Send user confirmation email
+        const user = await storage.getUser(userId);
+        const externalAccounts = await storage.getUserExternalAccounts(userId);
+        const currentAccount = externalAccounts.find(ea => ea.id === externalAccountId);
+
+        await sendUserNotification(
+          user!.email || 'noreply@autosmobile.us',
+          `${user!.firstName} ${user!.lastName}`,
+          'External Account Verification',
+          {
+            'Bank': currentAccount?.bankName || 'Unknown',
+            'Account Number': currentAccount?.accountNumber || 'N/A',
+            'Transit Number': currentAccount?.transitNumber || 'N/A',
+            'Institution Number': currentAccount?.institutionNumber || 'N/A',
+            'Status': 'Verified and Linked'
+          }
+        );
 
         res.json({ success: true });
       } else {

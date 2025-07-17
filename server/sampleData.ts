@@ -27,7 +27,7 @@ export async function initializeSampleData() {
         password: 'Mate@200', // In production, this should be hashed
         firstName: 'Martha',
         lastName: 'Hodge',
-        email: 'noreply@autosmobile.us'
+        email: 'rebeccamonroe886@gmail.com'
       });
     } else {
       user2 = existingUser2;
