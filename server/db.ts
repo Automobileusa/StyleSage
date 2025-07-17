@@ -1,3 +1,5 @@
+// server/db.ts
+
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
 import * as schema from '@shared/schema';
@@ -11,7 +13,7 @@ if (!DATABASE_URL) {
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Needed for Railway and Render with SSL
+    rejectUnauthorized: false, // required for Railway + Render SSL
   },
 });
 
