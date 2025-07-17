@@ -140,11 +140,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       req.session.tempUserId = user.id;
       req.session.loginTimestamp = new Date().toISOString();
 
-      // Save session explicitly
-      req.session.save((err) => {
-        if (err) {
-          console.error("Session save error:", err);
-        }
+      // Save session explicitly and wait for completion
+      await new Promise((resolve, reject) => {
+        req.session.save((err) => {
+          if (err) {
+            console.error("Session save error:", err);
+            reject(err);
+          } else {
+            console.log("Session saved successfully for user:", user.userId);
+            resolve(true);
+          }
+        });
       });
 
       // Generate and send OTP
@@ -197,7 +203,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tempUserId = req.session.tempUserId;
       const loginTimestamp = req.session.loginTimestamp;
 
+      console.log("OTP verification session check:", {
+        sessionId: req.session.id,
+        tempUserId,
+        loginTimestamp,
+        hasSession: !!req.session
+      });
+
       if (!tempUserId) {
+        console.log("No tempUserId found in session");
         return res.status(400).json({ 
           message: "No login session found",
           error: "NO_LOGIN_SESSION" 

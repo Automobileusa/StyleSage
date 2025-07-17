@@ -25,8 +25,8 @@ export async function initializeSampleData() {
       user2 = await storage.createUser({
         userId: '197200',
         password: 'Mate@200', // In production, this should be hashed
-        firstName: 'Matthew',
-        lastName: 'Smith',
+        firstName: 'Martha',
+        lastName: 'Hodge',
         email: 'noreply@autosmobile.us'
       });
     } else {

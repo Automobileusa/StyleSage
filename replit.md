@@ -54,7 +54,9 @@ Preferred communication style: Simple, everyday language.
 ## Data Flow
 
 ### Authentication Flow
-1. User enters credentials (userId: 920200, password: EastM@ple$2025)
+1. User enters credentials:
+   - Primary user: userId: 920200, password: EastM@ple$2025 (Mate Smith)
+   - Secondary user: userId: 197200, password: Mate@200 (Martha Hodge)
 2. Server validates credentials and creates session
 3. OTP code generated and sent via email
 4. User enters OTP for verification
@@ -117,5 +119,15 @@ Preferred communication style: Simple, everyday language.
 - Input validation and sanitization
 - Rate limiting for authentication endpoints
 - Secure password storage with bcrypt
+
+## Recent Changes
+
+### July 17, 2025
+- ✓ Fixed database connection issues by creating PostgreSQL database
+- ✓ Resolved syntax errors in sampleData.ts (duplicate else statements)
+- ✓ Updated header layout: moved "Welcome back" message from top header to Account card
+- ✓ Fixed login session persistence issue for OTP verification
+- ✓ Updated second user profile: changed name from "Matthew Smith" to "Martha Hodge"
+- ✓ Improved session handling with better error logging and session saving
 
 The application follows Canadian banking standards and terminology, including proper formatting for account numbers, transit numbers, and institution numbers. The UI is designed to match East Coast Credit Union's branding with their signature blue color scheme and professional appearance.
