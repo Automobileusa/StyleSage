@@ -1,13 +1,12 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TransactionTable from "@/components/TransactionTable";
-import { useCallback } from "react";
 
 export default function TransactionsPage() {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
@@ -40,12 +39,10 @@ export default function TransactionsPage() {
       });
       // Redirect to dashboard after a short delay
       setTimeout(() => {
-        setLocation("/");
+        setLocation("/dashboard");
       }, 2000);
     }
   }, [dashboardError, toast, setLocation]);
-
-  const [, setLocation] = useLocation();
 
   const handleBackToDashboard = useCallback(() => {
     try {

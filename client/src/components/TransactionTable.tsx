@@ -1,17 +1,17 @@
 
-import { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, AlertCircle, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { apiRequest } from '@/lib/queryClient';
+import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, RefreshCw } from "lucide-react";
 
 interface Transaction {
-  id: number;
+  id: string;
   date: string;
   description: string;
   amount: string;
-  type: string;
+  type: 'credit' | 'debit';
   category?: string;
 }
 
@@ -97,72 +97,76 @@ export default function TransactionTable({ transactions, showPagination = false 
 
   const formatAmount = (amount: string) => {
     try {
-      if (!amount) return '$0.00';
       const num = parseFloat(amount);
       if (isNaN(num)) return '$0.00';
-      
-      const formatted = Math.abs(num).toLocaleString('en-CA', { 
-        style: 'currency', 
-        currency: 'CAD' 
-      });
-      return num >= 0 ? `+${formatted}` : `-${formatted}`;
+      return new Intl.NumberFormat('en-CA', {
+        style: 'currency',
+        currency: 'CAD'
+      }).format(num);
     } catch (error) {
       console.error('Amount formatting error:', error);
       return '$0.00';
     }
   };
 
-  const handlePreviousPage = () => {
-    if (hasPrevious) {
-      setCurrentPage(currentPage - 1);
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year);
+    setCurrentPage(0);
+  };
+
+  const handleRetry = () => {
+    if (showPagination) {
+      refetch();
     }
   };
 
   const handleNextPage = () => {
     if (hasMore) {
-      setCurrentPage(currentPage + 1);
+      setCurrentPage(prev => prev + 1);
     }
   };
 
-  const handleYearChange = (year: number) => {
-    setSelectedYear(year);
-    setCurrentPage(0); // Reset to first page when changing year
-  };
-
-  const handleRetry = () => {
-    refetch();
+  const handlePreviousPage = () => {
+    if (hasPrevious) {
+      setCurrentPage(prev => prev - 1);
+    }
   };
 
   return (
     <div className="space-y-4">
-      {/* Controls */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-        {/* Filter */}
+      {/* Filter Controls */}
+      <div className="flex items-center justify-between flex-wrap gap-2">
         <div className="flex space-x-2">
-          <Button
-            variant={filter === 'all' ? 'default' : 'outline'}
-            size="sm"
+          <button
             onClick={() => setFilter('all')}
-            className="text-xs"
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              filter === 'all'
+                ? 'bg-[var(--primary-blue)] text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             All
-          </Button>
-          <Button
-            variant={filter === 'credit' ? 'default' : 'outline'}
-            size="sm"
+          </button>
+          <button
             onClick={() => setFilter('credit')}
-            className="text-xs"
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              filter === 'credit'
+                ? 'bg-green-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             Credits
-          </Button>
-          <Button
-            variant={filter === 'debit' ? 'default' : 'outline'}
-            size="sm"
+          </button>
+          <button
             onClick={() => setFilter('debit')}
-            className="text-xs"
+            className={`px-3 py-1 rounded text-sm transition-colors ${
+              filter === 'debit'
+                ? 'bg-red-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             Debits
-          </Button>
+          </button>
         </div>
 
         {/* Year Selector and Retry */}
@@ -206,7 +210,7 @@ export default function TransactionTable({ transactions, showPagination = false 
       {/* Loading State */}
       {showPagination && isLoading && (
         <div className="text-center py-8 text-[var(--text-gray)]">
-          <div className="spinner w-6 h-6 border-2 border-[var(--primary-blue)] border-t-transparent rounded-full mx-auto mb-2"></div>
+          <div className="spinner w-6 h-6 border-2 border-[var(--primary-blue)] border-t-transparent rounded-full mx-auto mb-2 animate-spin"></div>
           <p>Loading transactions...</p>
         </div>
       )}
@@ -259,34 +263,30 @@ export default function TransactionTable({ transactions, showPagination = false 
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Pagination Controls */}
       {showPagination && !isLoading && !error && (
-        <div className="flex justify-between items-center pt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handlePreviousPage}
-            disabled={!hasPrevious}
-            className="flex items-center space-x-1"
-          >
-            <ChevronLeft className="h-3 w-3" />
-            <span>Previous</span>
-          </Button>
-          
-          <span className="text-sm text-[var(--text-gray)]">
-            Page {currentPage + 1}
-          </span>
-          
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleNextPage}
-            disabled={!hasMore}
-            className="flex items-center space-x-1"
-          >
-            <span>Next</span>
-            <ChevronRight className="h-3 w-3" />
-          </Button>
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-[var(--text-gray)]">
+            Showing {Math.min(filteredTransactions.length, itemsPerPage)} transactions
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePreviousPage}
+              disabled={!hasPrevious}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={!hasMore}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
