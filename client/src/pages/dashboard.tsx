@@ -214,12 +214,7 @@ export default function DashboardPage() {
                   className="h-12 w-auto"
                 />
               </div>
-              <div className="user-welcome">
-                <p className="text-sm text-gray-500">Welcome back</p>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Mate Smith'}
-                </h1>
-              </div>
+
             </div>
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" className="hover:bg-blue-50">
@@ -247,9 +242,17 @@ export default function DashboardPage() {
           {chequingAccount && (
             <Card className="card-shadow border-l-4 border-[var(--primary-blue)]">
               <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-[var(--navy-blue)]">Chequing Account</h3>
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm text-gray-500">Welcome back</p>
+                    <h3 className="text-lg font-semibold text-[var(--navy-blue)]">
+                      {user?.firstName && user?.lastName ? `${user.firstName} ${user.lastName}` : 'Mate Smith'}
+                    </h3>
+                  </div>
                   <CreditCard className="text-[var(--primary-blue)]" size={24} />
+                </div>
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-base font-medium text-[var(--navy-blue)]">Chequing Account</h4>
                 </div>
                 <div className="mb-4">
                   <p className="text-3xl font-bold text-[var(--navy-blue)]">
