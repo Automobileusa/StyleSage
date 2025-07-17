@@ -428,8 +428,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bill payment
   app.post('/api/bill-payment', isAuthenticated, async (req: any, res) => {
     try {
-      // Parse request body without userId (it comes from session)
-      const billPaymentData = insertBillPaymentSchema.omit({ userId: true }).parse(req.body);
       const userId = req.session.userId;
 
       if (!userId || typeof userId !== 'string') {
@@ -439,10 +437,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
+      // Manually parse and validate the request body with proper date handling
+      const { payeeName, payeeAddress, amount, paymentDate } = req.body;
+
+      if (!payeeName || !payeeAddress || !amount || !paymentDate) {
+        return res.status(400).json({ 
+          message: "Missing required fields",
+          error: "MISSING_FIELDS" 
+        });
+      }
+
+      // Parse and validate the payment date
+      let parsedPaymentDate: Date;
+      try {
+        parsedPaymentDate = new Date(paymentDate);
+        if (isNaN(parsedPaymentDate.getTime())) {
+          throw new Error('Invalid date');
+        }
+      } catch (dateError) {
+        return res.status(400).json({ 
+          message: "Invalid payment date format",
+          error: "INVALID_DATE" 
+        });
+      }
+
+      // Validate amount is a valid number
+      const parsedAmount = parseFloat(amount);
+      if (isNaN(parsedAmount) || parsedAmount <= 0) {
+        return res.status(400).json({ 
+          message: "Invalid amount",
+          error: "INVALID_AMOUNT" 
+        });
+      }
+
+      // Sanitize string inputs
+      const sanitizedPayeeName = sanitizeInput(payeeName);
+      const sanitizedPayeeAddress = sanitizeInput(payeeAddress);
+
+      if (!sanitizedPayeeName || !sanitizedPayeeAddress) {
+        return res.status(400).json({ 
+          message: "Invalid input data",
+          error: "INVALID_INPUT" 
+        });
+      }
+
       // Create bill payment record
       const billPayment = await storage.createBillPayment({
-        ...billPaymentData,
-        userId
+        userId,
+        payeeName: sanitizedPayeeName,
+        payeeAddress: sanitizedPayeeAddress,
+        amount: parsedAmount.toFixed(2),
+        paymentDate: parsedPaymentDate
       });
 
       // Generate and send OTP
