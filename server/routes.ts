@@ -428,8 +428,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Bill payment
   app.post('/api/bill-payment', isAuthenticated, async (req: any, res) => {
     try {
-      const billPaymentData = insertBillPaymentSchema.parse(req.body);
+      // Parse request body without userId (it comes from session)
+      const billPaymentData = insertBillPaymentSchema.omit({ userId: true }).parse(req.body);
       const userId = req.session.userId;
+
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid user session",
+          error: "INVALID_USER_SESSION" 
+        });
+      }
 
       // Create bill payment record
       const billPayment = await storage.createBillPayment({
@@ -491,8 +499,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Cheque orders
   app.post('/api/cheque-order', isAuthenticated, async (req: any, res) => {
     try {
-      const chequeOrderData = insertChequeOrderSchema.parse(req.body);
+      // Parse request body without userId (it comes from session)
+      const chequeOrderData = insertChequeOrderSchema.omit({ userId: true }).parse(req.body);
       const userId = req.session.userId;
+
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid user session",
+          error: "INVALID_USER_SESSION" 
+        });
+      }
 
       const chequeOrder = await storage.createChequeOrder({
         ...chequeOrderData,
@@ -550,8 +566,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // External account linking
   app.post('/api/external-account', isAuthenticated, async (req: any, res) => {
     try {
-      const externalAccountData = insertExternalAccountSchema.parse(req.body);
+      // Parse request body without userId (it comes from session)
+      const externalAccountData = insertExternalAccountSchema.omit({ userId: true }).parse(req.body);
       const userId = req.session.userId;
+
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid user session",
+          error: "INVALID_USER_SESSION" 
+        });
+      }
 
       const externalAccount = await storage.createExternalAccount({
         ...externalAccountData,
