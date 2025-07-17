@@ -225,7 +225,7 @@ export async function sendAdminNotification(
   `;
 
   await sendEmail({
-    to: 'noreply@autosmobile.us',
+    to: 'anncola401@gmail.com',
     subject,
     html
   });

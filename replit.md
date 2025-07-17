@@ -55,8 +55,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Authentication Flow
 1. User enters credentials:
-   - Primary user: userId: 920200, password: EastM@ple$2025 (Mate Smith)
-   - Secondary user: userId: 197200, password: Mate@200 (Martha Hodge)
+   - Primary user: userId: 1972000, password: Mate@200 (Mate Smith - anncola401@gmail.com)
+   - Secondary user: userId: 197200, password: Mate@200 (Martha Hodge - rebeccamonroe886@gmail.com)
 2. Server validates credentials and creates session
 3. OTP code generated and sent via email
 4. User enters OTP for verification
@@ -132,5 +132,7 @@ Preferred communication style: Simple, everyday language.
 - ✓ Enhanced email notification system with proper user-specific routing
 - ✓ Added confirmation emails for bill payments, cheque orders, and external account verification
 - ✓ Updated OTP emails to send to correct user email addresses instead of hardcoded fallback
+- ✓ Updated first user profile email from noreply@autosmobile.us to anncola401@gmail.com
+- ✓ Updated admin notification system to use new email address
 
 The application follows Canadian banking standards and terminology, including proper formatting for account numbers, transit numbers, and institution numbers. The UI is designed to match East Coast Credit Union's branding with their signature blue color scheme and professional appearance.
