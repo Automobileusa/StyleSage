@@ -694,6 +694,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Delete external account
+  app.delete('/api/external-account/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const externalAccountId = parseInt(req.params.id);
+      const userId = req.session.userId;
+
+      if (!externalAccountId || isNaN(externalAccountId)) {
+        return res.status(400).json({ 
+          message: "Invalid external account ID",
+          error: "INVALID_ACCOUNT_ID" 
+        });
+      }
+
+      if (!userId || typeof userId !== 'string') {
+        return res.status(400).json({ 
+          message: "Invalid user session",
+          error: "INVALID_USER_SESSION" 
+        });
+      }
+
+      // Verify the external account belongs to the authenticated user
+      const userExternalAccounts = await storage.getUserExternalAccounts(userId);
+      const accountToDelete = userExternalAccounts.find(acc => acc.id === externalAccountId);
+
+      if (!accountToDelete) {
+        return res.status(404).json({ 
+          message: "External account not found or not authorized",
+          error: "ACCOUNT_NOT_FOUND" 
+        });
+      }
+
+      // Delete the external account and associated micro deposits
+      await storage.deleteExternalAccount(externalAccountId);
+
+      res.json({ 
+        success: true, 
+        message: "External account deleted successfully" 
+      });
+    } catch (error) {
+      console.error("Delete external account error:", error);
+      res.status(500).json({ 
+        message: "Failed to delete external account",
+        error: "DELETE_ERROR" 
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

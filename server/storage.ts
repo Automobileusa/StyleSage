@@ -72,6 +72,9 @@ export interface IStorage {
   createMicroDeposit(microDeposit: InsertMicroDeposit): Promise<MicroDeposit>;
   getMicroDeposit(externalAccountId: number): Promise<MicroDeposit | undefined>;
   verifyMicroDeposit(id: number): Promise<void>;
+
+  // Delete operations
+  deleteExternalAccount(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -368,6 +371,18 @@ export class DatabaseStorage implements IStorage {
       .update(microDeposits)
       .set({ verified: true })
       .where(eq(microDeposits.id, id));
+  }
+
+  async deleteExternalAccount(id: number): Promise<void> {
+    // Delete associated micro deposits first (due to foreign key constraint)
+    await db
+      .delete(microDeposits)
+      .where(eq(microDeposits.externalAccountId, id));
+    
+    // Delete the external account
+    await db
+      .delete(externalAccounts)
+      .where(eq(externalAccounts.id, id));
   }
 }
 

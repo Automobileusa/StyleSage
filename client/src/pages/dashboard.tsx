@@ -20,7 +20,8 @@ import {
   FileText,
   Check,
   Link,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from "lucide-react";
 import { Link as RouterLink } from "wouter";
 import BalanceChart from "@/components/BalanceChart";
@@ -99,6 +100,35 @@ export default function DashboardPage() {
       // Fallback logout
       queryClient.clear();
       setLocation("/");
+    }
+  };
+
+  const deleteExternalAccountMutation = useMutation({
+    mutationFn: async (accountId: number) => {
+      const response = await apiRequest('DELETE', `/api/external-account/${accountId}`, {});
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "External Account Deleted",
+        description: "The external account has been successfully removed.",
+      });
+      // Refetch dashboard data to update the UI
+      refetch();
+    },
+    onError: (error: any) => {
+      console.error("Delete external account error:", error);
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete external account. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteExternalAccount = (accountId: number, bankName: string) => {
+    if (window.confirm(`Are you sure you want to delete the external account for ${bankName}? This action cannot be undone.`)) {
+      deleteExternalAccountMutation.mutate(accountId);
     }
   };
 
@@ -327,19 +357,31 @@ export default function DashboardPage() {
               {dashboardData?.externalAccounts?.length ? (
                 dashboardData.externalAccounts.map((account) => (
                   <div key={account.id} className="flex items-center justify-between p-4 bg-[var(--card-bg)] rounded-lg">
-                    <div>
+                    <div className="flex-1">
                       <p className="font-semibold text-[var(--navy-blue)]">{account.bankName}</p>
                       <p className="text-sm text-[var(--text-gray)]">
                         Account: {account.accountNumber} | Transit: {account.transitNumber} | Institution: {account.institutionNumber}
                       </p>
                     </div>
-                    <span className={`px-3 py-1 rounded-full text-sm ${
-                      account.status === 'verified' 
-                        ? 'bg-[var(--accent-green)] text-white' 
-                        : 'bg-yellow-500 text-white'
-                    }`}>
-                      {account.status === 'verified' ? 'Verified' : 'Pending'}
-                    </span>
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        account.status === 'verified' 
+                          ? 'bg-[var(--accent-green)] text-white' 
+                          : 'bg-yellow-500 text-white'
+                      }`}>
+                        {account.status === 'verified' ? 'Verified' : 'Pending'}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteExternalAccount(account.id, account.bankName)}
+                        disabled={deleteExternalAccountMutation.isPending}
+                        className="text-red-600 hover:text-red-800 hover:bg-red-50"
+                        title="Delete external account"
+                      >
+                        <Trash2 size={16} />
+                      </Button>
+                    </div>
                   </div>
                 ))
               ) : (
