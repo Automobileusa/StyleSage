@@ -43,22 +43,8 @@ export async function initializeSampleData() {
 
     let chequingAccount1, savingsAccount1, chequingAccount2, savingsAccount2;
 
-    // Update existing accounts with full account numbers or create new ones
-    if (existingAccounts1.length > 0) {
-      // Update existing accounts for user 1
-      chequingAccount1 = existingAccounts1.find(acc => acc.accountType === 'chequing');
-      savingsAccount1 = existingAccounts1.find(acc => acc.accountType === 'savings');
-      
-      if (chequingAccount1 && chequingAccount1.accountNumber.includes('*')) {
-        await storage.updateAccount(chequingAccount1.id, { accountNumber: '35103221' });
-        chequingAccount1.accountNumber = '35103221';
-      }
-      
-      if (savingsAccount1 && savingsAccount1.accountNumber.includes('*')) {
-        await storage.updateAccount(savingsAccount1.id, { accountNumber: '35107892' });
-        savingsAccount1.accountNumber = '35107892';
-      }
-    } else {
+    // Create accounts for user 1 if they don't exist
+    if (existingAccounts1.length === 0) {
       chequingAccount1 = await storage.createAccount({
         userId: user1.id,
         accountType: 'chequing',
@@ -79,22 +65,8 @@ export async function initializeSampleData() {
       savingsAccount1 = existingAccounts1.find(acc => acc.accountType === 'savings');
     }
 
-    // Update existing accounts with full account numbers or create new ones
-    if (existingAccounts2.length > 0) {
-      // Update existing accounts for user 2
-      chequingAccount2 = existingAccounts2.find(acc => acc.accountType === 'chequing');
-      savingsAccount2 = existingAccounts2.find(acc => acc.accountType === 'savings');
-      
-      if (chequingAccount2 && chequingAccount2.accountNumber.includes('*')) {
-        await storage.updateAccount(chequingAccount2.id, { accountNumber: '35205687' });
-        chequingAccount2.accountNumber = '35205687';
-      }
-      
-      if (savingsAccount2 && savingsAccount2.accountNumber.includes('*')) {
-        await storage.updateAccount(savingsAccount2.id, { accountNumber: '35209234' });
-        savingsAccount2.accountNumber = '35209234';
-      }
-    } else {
+    // Create accounts for user 2 if they don't exist
+    if (existingAccounts2.length === 0) {
       chequingAccount2 = await storage.createAccount({
         userId: user2.id,
         accountType: 'chequing',
