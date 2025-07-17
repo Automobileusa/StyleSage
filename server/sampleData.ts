@@ -74,9 +74,6 @@ export async function initializeSampleData() {
         balance: '375000.00',
         accountName: 'High Interest Savings'
       });
-    } else {
-      chequingAccount1 = existingAccounts1.find(acc => acc.accountType === 'chequing');
-      savingsAccount1 = existingAccounts1.find(acc => acc.accountType === 'savings');
     }
 
     // Update existing accounts with full account numbers or create new ones
@@ -110,9 +107,6 @@ export async function initializeSampleData() {
         balance: '525000.00',
         accountName: 'Emergency Savings'
       });
-    } else {
-      chequingAccount2 = existingAccounts2.find(acc => acc.accountType === 'chequing');
-      savingsAccount2 = existingAccounts2.find(acc => acc.accountType === 'savings');
     }
 
     // Create comprehensive transactions for user 1 (50+ transactions)
