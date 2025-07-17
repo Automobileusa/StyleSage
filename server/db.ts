@@ -1,8 +1,8 @@
-// server/db.ts
-
+import pg from 'pg';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
 import * as schema from '@shared/schema';
+
+const { Pool } = pg;
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -13,7 +13,7 @@ if (!DATABASE_URL) {
 const pool = new Pool({
   connectionString: DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // required for Railway + Render SSL
+    rejectUnauthorized: false,
   },
 });
 
