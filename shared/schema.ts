@@ -27,13 +27,13 @@ export const sessions = pgTable(
 // Users table for banking customers
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
-  userId: varchar("user_id").notNull().unique(), // Banking user ID like 920200
+  user_id: varchar("user_id").notNull().unique(), // Banking user ID like 920200
   password: varchar("password").notNull(),
-  firstName: varchar("first_name").notNull(),
-  lastName: varchar("last_name").notNull(),
+  first_Name: varchar("first_name").notNull(),
+  last_Name: varchar("last_name").notNull(),
   email: varchar("email"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
+  updated_at: timestamp("updated_at").defaultNow(),
 });
 
 // Bank accounts (chequing, savings, etc.)
@@ -121,10 +121,10 @@ export const microDeposits = pgTable("micro_deposits", {
 
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
-  userId: true,
+  user_id: true,
   password: true,
-  firstName: true,
-  lastName: true,
+  first_Name: true,
+  last_Name: true,
   email: true,
 });
 
