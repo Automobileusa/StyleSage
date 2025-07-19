@@ -111,7 +111,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(accounts)
-      .where(eq(accounts.userId, userId));
+      .where(eq(accounts.user_id, userId));
   }
 
   async getAccount(id: number): Promise<Account | undefined> {
@@ -148,7 +148,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(transactions)
-      .where(eq(transactions.accountId, accountId))
+      .where(eq(transactions.account_id, accountId))
       .orderBy(desc(transactions.date))
       .limit(limit);
   }
@@ -157,17 +157,17 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select({
         id: transactions.id,
-        accountId: transactions.accountId,
+        accountId: transactions.account_id,
         date: transactions.date,
         description: transactions.description,
         amount: transactions.amount,
         type: transactions.type,
         category: transactions.category,
-        createdAt: transactions.createdAt,
+        createdAt: transactions.created_at,
       })
       .from(transactions)
-      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(eq(accounts.userId, userId))
+      .innerJoin(accounts, eq(transactions.account_id, accounts.id))
+      .where(eq(accounts.user_id, userId))
       .orderBy(desc(transactions.date))
       .limit(limit);
   }
@@ -176,23 +176,23 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({
         id: transactions.id,
-        accountId: transactions.accountId,
+        accountId: transactions.account_id,
         date: transactions.date,
         description: transactions.description,
         amount: transactions.amount,
         type: transactions.type,
         category: transactions.category,
-        createdAt: transactions.createdAt,
+        createdAt: transactions.created_at,
       })
       .from(transactions)
-      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(eq(accounts.userId, userId));
+      .innerJoin(accounts, eq(transactions.account_id, accounts.id))
+      .where(eq(accounts.user_id, userId));
 
     if (year) {
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year + 1, 0, 1);
       query = query.where(and(
-        eq(accounts.userId, userId),
+        eq(accounts.user_id, userId),
         gte(transactions.date, startOfYear),
         gte(endOfYear, transactions.date)
       ));
@@ -208,14 +208,14 @@ export class DatabaseStorage implements IStorage {
     let query = db
       .select({ count: count(transactions.id) })
       .from(transactions)
-      .innerJoin(accounts, eq(transactions.accountId, accounts.id))
-      .where(eq(accounts.userId, userId));
+      .innerJoin(accounts, eq(transactions.account_id, accounts.id))
+      .where(eq(accounts.user_id, userId));
 
     if (year) {
       const startOfYear = new Date(year, 0, 1);
       const endOfYear = new Date(year + 1, 0, 1);
       query = query.where(and(
-        eq(accounts.userId, userId),
+        eq(accounts.user_id, userId),
         gte(transactions.date, startOfYear),
         gte(endOfYear, transactions.date)
       ));
@@ -248,11 +248,11 @@ export class DatabaseStorage implements IStorage {
       .from(otpCodes)
       .where(
         and(
-          eq(otpCodes.userId, userId),
+          eq(otpCodes.user_id, userId),
           eq(otpCodes.code, code),
           eq(otpCodes.purpose, purpose),
           eq(otpCodes.used, false),
-          gte(otpCodes.expiresAt, new Date())
+          gte(otpCodes.expires_at, new Date())
         )
       );
     return otp || undefined;
@@ -274,11 +274,11 @@ export class DatabaseStorage implements IStorage {
         .from(otpCodes)
         .where(
           and(
-            eq(otpCodes.userId, userId),
-            gte(otpCodes.createdAt, cutoffTime)
+            eq(otpCodes.user_id, userId),
+            gte(otpCodes.created_at, cutoffTime)
           )
         )
-        .orderBy(desc(otpCodes.createdAt));
+        .orderBy(desc(otpCodes.created_at));
 
       return recentOtps;
     } catch (error) {
@@ -300,8 +300,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(billPayments)
-      .where(eq(billPayments.userId, userId))
-      .orderBy(desc(billPayments.createdAt));
+      .where(eq(billPayments.user_id, userId))
+      .orderBy(desc(billPayments.created_at));
   }
 
   async updateBillPaymentStatus(id: number, status: string): Promise<void> {
@@ -324,8 +324,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(chequeOrders)
-      .where(eq(chequeOrders.userId, userId))
-      .orderBy(desc(chequeOrders.createdAt));
+      .where(eq(chequeOrders.user_id, userId))
+      .orderBy(desc(chequeOrders.created_at));
   }
 
   async updateChequeOrderStatus(id: number, status: string): Promise<void> {
@@ -348,8 +348,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(externalAccounts)
-      .where(eq(externalAccounts.userId, userId))
-      .orderBy(desc(externalAccounts.createdAt));
+      .where(eq(externalAccounts.user_id, userId))
+      .orderBy(desc(externalAccounts.created_at));
   }
 
   async updateExternalAccountStatus(id: number, status: string): Promise<void> {
@@ -372,7 +372,7 @@ export class DatabaseStorage implements IStorage {
     const [microDeposit] = await db
       .select()
       .from(microDeposits)
-      .where(eq(microDeposits.externalAccountId, externalAccountId));
+      .where(eq(microDeposits.external_account_id, externalAccountId));
     return microDeposit || undefined;
   }
 
@@ -387,7 +387,7 @@ export class DatabaseStorage implements IStorage {
     // Delete associated micro deposits first (due to foreign key constraint)
     await db
       .delete(microDeposits)
-      .where(eq(microDeposits.externalAccountId, id));
+      .where(eq(microDeposits.external_account_id, id));
 
     // Delete the external account
     await db
