@@ -29,8 +29,8 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
   user_id: varchar("user_id").notNull().unique(), // Banking user ID like 920200
   password: varchar("password").notNull(),
-  first_Name: varchar("first_name").notNull(),
-  last_Name: varchar("last_name").notNull(),
+  first_name: varchar("first_name").notNull(),
+  last_name: varchar("last_name").notNull(),
   email: varchar("email"),
   created_at: timestamp("created_at").defaultNow(),
   updated_at: timestamp("updated_at").defaultNow(),
@@ -39,92 +39,92 @@ export const users = pgTable("users", {
 // Bank accounts (chequing, savings, etc.)
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  accountType: varchar("account_type").notNull(), // chequing, savings, tfsa, term_deposit
-  accountNumber: varchar("account_number").notNull(),
+  user_id: varchar("user_id").references(() => users.id).notNull(),
+  account_type: varchar("account_type").notNull(), // chequing, savings, tfsa, term_deposit
+  account_number: varchar("account_number").notNull(),
   balance: decimal("balance", { precision: 12, scale: 2 }).notNull(),
-  accountName: varchar("account_name").notNull(),
-  createdAt: timestamp("created_at").defaultNow(),
+  account_name: varchar("account_name").notNull(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Transaction history
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
-  accountId: integer("account_id").references(() => accounts.id).notNull(),
+  account_id: integer("account_id").references(() => accounts.id).notNull(),
   date: timestamp("date").notNull(),
   description: varchar("description").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   type: varchar("type").notNull(), // credit, debit
   category: varchar("category"), // payroll, transfer, bill_payment, etc.
-  createdAt: timestamp("created_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // OTP codes for verification
 export const otpCodes = pgTable("otp_codes", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
+  user_id: varchar("user_id").references(() => users.id).notNull(),
   code: varchar("code", { length: 6 }).notNull(),
   purpose: varchar("purpose").notNull(), // login, bill_pay, cheque_order, external_account
-  expiresAt: timestamp("expires_at").notNull(),
+  expires_at: timestamp("expires_at").notNull(),
   used: boolean("used").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Bill payments
 export const billPayments = pgTable("bill_payments", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  payeeName: varchar("payee_name").notNull(),
-  payeeAddress: text("payee_address").notNull(),
+  user_id: varchar("user_id").references(() => users.id).notNull(),
+  payee_name: varchar("payee_name").notNull(),
+  payee_address: text("payee_address").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
-  paymentDate: timestamp("payment_date").notNull(),
+  payment_date: timestamp("payment_date").notNull(),
   status: varchar("status").default("pending"), // pending, completed, failed
-  otpCodeId: integer("otp_code_id").references(() => otpCodes.id),
-  createdAt: timestamp("created_at").defaultNow(),
+  otp_code_id: integer("otp_code_id").references(() => otpCodes.id),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Cheque orders
 export const chequeOrders = pgTable("cheque_orders", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  accountId: integer("account_id").references(() => accounts.id).notNull(),
-  deliveryAddress: text("delivery_address").notNull(),
+  user_id: varchar("user_id").references(() => users.id).notNull(),
+  account_id: integer("account_id").references(() => accounts.id).notNull(),
+  delivery_address: text("delivery_address").notNull(),
   quantity: integer("quantity").notNull(), // 25, 50, 100
   status: varchar("status").default("pending"), // pending, processing, shipped, delivered
-  otpCodeId: integer("otp_code_id").references(() => otpCodes.id),
-  createdAt: timestamp("created_at").defaultNow(),
+  otp_code_id: integer("otp_code_id").references(() => otpCodes.id),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // External bank accounts for linking
 export const externalAccounts = pgTable("external_accounts", {
   id: serial("id").primaryKey(),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  bankName: varchar("bank_name").notNull(),
-  accountNumber: varchar("account_number").notNull(),
-  transitNumber: varchar("transit_number", { length: 5 }).notNull(), // Canadian 5-digit transit
-  institutionNumber: varchar("institution_number", { length: 3 }).notNull(), // Canadian 3-digit institution
-  accountHolderName: varchar("account_holder_name").notNull(),
+  user_id: varchar("user_id").references(() => users.id).notNull(),
+  bank_name: varchar("bank_name").notNull(),
+  account_number: varchar("account_number").notNull(),
+  transit_number: varchar("transit_number", { length: 5 }).notNull(), // Canadian 5-digit transit
+  institution_number: varchar("institution_number", { length: 3 }).notNull(), // Canadian 3-digit institution
+  account_holder_name: varchar("account_holder_name").notNull(),
   status: varchar("status").default("pending"), // pending, verified, failed
-  otpCodeId: integer("otp_code_id").references(() => otpCodes.id),
-  createdAt: timestamp("created_at").defaultNow(),
+  otp_code_id: integer("otp_code_id").references(() => otpCodes.id),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Micro deposits for external account verification
 export const microDeposits = pgTable("micro_deposits", {
   id: serial("id").primaryKey(),
-  externalAccountId: integer("external_account_id").references(() => externalAccounts.id).notNull(),
+  external_account_id: integer("external_account_id").references(() => externalAccounts.id).notNull(),
   deposit1: decimal("deposit1", { precision: 4, scale: 2 }).notNull(), // e.g., 0.07
   deposit2: decimal("deposit2", { precision: 4, scale: 2 }).notNull(), // e.g., 0.21
   verified: boolean("verified").default(false),
-  createdAt: timestamp("created_at").defaultNow(),
+  created_at: timestamp("created_at").defaultNow(),
 });
 
 // Insert schemas for validation
 export const insertUserSchema = createInsertSchema(users).pick({
   user_id: true,
   password: true,
-  first_Name: true,
-  last_Name: true,
+  first_name: true,
+  last_name: true,
   email: true,
 });
 
