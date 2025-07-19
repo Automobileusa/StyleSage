@@ -2,6 +2,8 @@
 
 import express, { Request, Response, NextFunction } from 'express';
 import { setupVite, serveStatic, log } from './vite';
+import { sql } from 'drizzle-orm';
+import { db } from './db';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dynamically load dotenv only in non-production (local dev):
@@ -14,7 +16,6 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 // ─────────────────────────────────────────────────────────────────────────────
-
 
 console.log("🚀 DATABASE_URL = ", process.env.DATABASE_URL);
 const app = express();
@@ -46,6 +47,21 @@ app.use((req, res, next) => {
   next();
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// 🛠️ Create users table if it doesn't exist
+async function createUsersTableIfMissing() {
+  await db.execute(sql`
+    CREATE TABLE IF NOT EXISTS users (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email TEXT UNIQUE NOT NULL,
+      name TEXT,
+      password TEXT,
+      created_at TIMESTAMP DEFAULT NOW()
+    );
+  `);
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 (async () => {
   console.log('🚀 Starting app…');
 
@@ -57,7 +73,10 @@ app.use((req, res, next) => {
     console.log('✅ DATABASE_URL is defined');
   }
 
-  // Dynamically import routes (and any DB-using modules) **after** env is ready
+  // ✅ Create users table if missing before anything else DB-related
+  await createUsersTableIfMissing();
+
+  // Dynamically import routes (and any DB-using modules)
   const { registerRoutes } = await import('./routes');
   const server = await registerRoutes(app);
 
