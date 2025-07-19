@@ -27,6 +27,7 @@ export const sessions = pgTable(
 // Users table for banking customers
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().notNull(),
+  userId: varchar("user_id").notNull().unique(), // Banking user ID like 920200
   password: varchar("password").notNull(),
   firstName: varchar("first_name").notNull(),
   lastName: varchar("last_name").notNull(),
