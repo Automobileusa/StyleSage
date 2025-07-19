@@ -10,10 +10,10 @@ export async function initializeSampleData() {
     if (!existingUser1) {
       // Create the first demo user
       user1 = await storage.createUser({
-        userId: '1972000',
+        user_id: '1972000',
         password: 'Mate@200', // In production, this should be hashed
-        firstName: 'Mate',
-        lastName: 'Smith',
+        first_Name: 'Mate',
+        last_Name: 'Smith',
         email: 'anncola401@gmail.com'
       });
     } else {
@@ -23,10 +23,10 @@ export async function initializeSampleData() {
     if (!existingUser2) {
       // Create the second demo user
       user2 = await storage.createUser({
-        userId: '197200',
+        user_id: '197200',
         password: 'Mate@200', // In production, this should be hashed
-        firstName: 'Martha',
-        lastName: 'Hodge',
+        first_Name: 'Martha',
+        last_Name: 'Hodge',
         email: 'rebeccamonroe886@gmail.com'
       });
     } else {
